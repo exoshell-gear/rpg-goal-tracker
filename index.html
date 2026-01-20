@@ -292,6 +292,7 @@ function drawMilestones() {
 
   state.milestones.forEach(m => {
     const el = document.createElement("div");
+    m._el = el;
     el.className = "milestone " + m.type;
     el.style.left = m.x + "px";
     el.style.top = m.y + "px";
@@ -471,12 +472,19 @@ typeSelect.onchange = () => {
 
 window.onmousemove = window.ontouchmove = e => {
   if (!dragTarget) return;
+
   const p = e.touches ? getTouch(e) : e;
   dragTarget.x = p.clientX - dragOffset.x;
   dragTarget.y = p.clientY - dragOffset.y;
-  drawAvatar();
-  drawMilestones();
+
+  if (dragTarget === state.avatar) {
+    drawAvatar();
+  } else {
+    dragTarget._el.style.left = dragTarget.x + "px";
+    dragTarget._el.style.top = dragTarget.y + "px";
+  }
 };
+
 
 
 
