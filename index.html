@@ -6,6 +6,11 @@
 
 <style>
 
+.map-switcher {
+  display: none;
+}
+
+
 .panel {
   background: radial-gradient(circle at top, #181818, #0e0e0e);
   box-shadow: 0 20px 60px rgba(0,0,0,.6);
@@ -133,7 +138,7 @@
   }
 
   .panel {
-  background: #111;
+  background: linear-gradient(#181818, #0f0f0f);
   color: white;
   padding: 20px;
   width: 520px;
@@ -171,6 +176,37 @@ button.danger:hover {
   border-color: #ff6666;
 }
 
+#dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 30;
+}
+
+
+#dock button {
+  width: 44px;
+  height: 44px;
+  background: rgba(20,20,20,0.85);
+  border: 1px solid #333;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#dock button:hover {
+  background: #222;
+}
+
+#dock button:active {
+  transform: translateY(1px);
+}
+
+
 </style>
 </head>
 
@@ -179,6 +215,7 @@ button.danger:hover {
 <select id="mapSelect" class="map-switcher">
   <option value="mountain">Mountain</option>
   <option value="volcano">Volcano</option>
+  <option value="city">City</option>
   <option value="temple">Temple</option>
 
 </select>
@@ -190,6 +227,14 @@ button.danger:hover {
 
 <div id="modal"><div class="panel" id="modalContent"></div></div>
 <div id="context"><div class="panel" id="contextContent"></div></div>
+
+<div id="dock">
+  <button data-action="menu">❔</button>
+  <button data-action="map">🗺</button>
+  <button data-action="wishlist">🎒</button>
+  <button data-action="future">⭐</button>
+</div>
+
 
 <script>
 
@@ -216,6 +261,7 @@ function killDrag() {
 const maps = {
   mountain: "mountain-map.png",
   temple: "temple-map.png",
+  city: "oldcity-map.png",
   volcano: "lava-map.png"
 };
 
@@ -607,6 +653,59 @@ modal.onclick = e => {
 context.onclick = e => {
   e.stopPropagation();
   if (e.target === context) context.style.display = "none";
+};
+
+document.getElementById("dock").onclick = e => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+
+  killDrag();
+
+  const action = btn.dataset.action;
+
+  if (action === "menu") {
+  modalContent.innerHTML = `
+    <iframe
+  src="instructions.html"
+  style="
+    width:100%;
+    height:60vh;
+    border:none;
+    background:#111;
+    border-radius:6px;
+  "
+></iframe>
+  `;
+  modal.style.display = "flex";
+}
+
+
+
+  if (action === "map") {
+    modalContent.innerHTML = `
+      <h3 style="text-align:center;">Choose Map</h3>
+      ${Object.keys(maps).map(k =>
+        `<button onclick="setMap('${k}'); modal.style.display='none'">${k}</button>`
+      ).join("")}
+    `;
+    modal.style.display = "flex";
+  }
+
+  if (action === "wishlist") {
+    modalContent.innerHTML = `
+      <h3>Wishlist</h3>
+      <p>Coming next.</p>
+    `;
+    modal.style.display = "flex";
+  }
+
+  if (action === "future") {
+    modalContent.innerHTML = `
+      <h3>Reserved</h3>
+      <p>This slot is intentionally empty.</p>
+    `;
+    modal.style.display = "flex";
+  }
 };
 
 
