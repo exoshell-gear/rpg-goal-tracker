@@ -193,6 +193,9 @@ button.danger:hover {
 
 <script>
 
+let touchStartX = 0;
+let touchStartY = 0;
+
 let touchMoved = false;
 
 let touchId = null;
@@ -318,6 +321,8 @@ el.ontouchstart = e => {
 
   const t = e.touches[0];
   touchMoved = false;
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
 
   dragTarget = m;
   dragOffset.x = t.clientX - m.x;
@@ -326,19 +331,27 @@ el.ontouchstart = e => {
   e.preventDefault();
 };
 
+
 el.ontouchmove = e => {
   if (!dragTarget) return;
 
   const t = e.touches[0];
-  touchMoved = true;
+
+  const dx = Math.abs(t.clientX - touchStartX);
+  const dy = Math.abs(t.clientY - touchStartY);
+
+  if (dx > 6 || dy > 6) {
+    touchMoved = true;
+  }
+
+  if (!touchMoved) return;
 
   dragTarget.x = t.clientX - dragOffset.x;
   dragTarget.y = t.clientY - dragOffset.y;
 
-  drawMilestones();
+  dragTarget._el.style.left = dragTarget.x + "px";
+  dragTarget._el.style.top = dragTarget.y + "px";
 };
-
-
 
     map.appendChild(el);
   });
@@ -527,6 +540,24 @@ avatar.ontouchstart = e => {
   e.preventDefault();
 };
 
+avatar.ontouchend = e => {
+  if (touchMoved) return;
+
+  modalContent.innerHTML = `
+    <input value="${state.avatar.name}">
+    <textarea placeholder="Notes">${state.avatar.notes}</textarea>
+  `;
+
+  modalContent.querySelector("input").onchange = e => {
+    state.avatar.name = e.target.value; save();
+  };
+
+  modalContent.querySelector("textarea").onchange = e => {
+    state.avatar.notes = e.target.value; save();
+  };
+
+  modal.style.display = "flex";
+};
 
 modal.onclick = e => {
   if (e.target === modal) modal.style.display = "none";
