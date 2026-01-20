@@ -13,14 +13,26 @@
 
 .task {
   display: grid;
-  grid-template-columns: 20px 1fr 24px;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  grid-template-columns: 20px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: 12px;
+  padding: 8px 0;
 }
 
 .task span {
   font-size: 14px;
+  text-align: left;
+  width: 100%;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.task button {
+  align-self: start;
+  margin-top: 2px;
 }
 
 .task input[type="checkbox"] {
@@ -121,12 +133,13 @@
   }
 
   .panel {
-    background: #111;
-    color: white;
-    padding: 20px;
-    width: 360px;
-    border-radius: 8px;
-  }
+  background: #111;
+  color: white;
+  padding: 20px;
+  width: 520px;
+  max-width: 90vw;
+  border-radius: 8px;
+}
 
   input, textarea, select {
     width: 100%;
@@ -137,21 +150,27 @@
     padding: 6px;
   }
 
-  .task {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .task span {
-    flex: 1;
-    cursor: pointer;
-  }
-
   button {
     width: 100%;
     margin-top: 8px;
   }
+  
+  button.danger {
+  width: auto;
+  padding: 6px 12px;
+  margin-top: 12px;
+  background: #1a1a1a;
+  color: #ff6666;
+  border: 1px solid #333;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button.danger:hover {
+  background: #220;
+  border-color: #ff6666;
+}
+
 </style>
 </head>
 
@@ -195,6 +214,18 @@ const icons = {
   sidequest: "icons/sidequest.png",
   treasure: "icons/treasure.png"
 };
+
+const milestoneHelp = {
+  regular: "A step in the journey",
+  start: "Your current state",
+  enemy: "Something you are avoiding",
+  dragon: "The big end goal",
+  treasure: "Something nice you wouldn't normally do for yourself",
+  reward: "Your guilty pleasure",
+  mentor: "A book, a coach, a friend",
+  sidequest: "Optional mini journey"
+};
+
 
 let state = JSON.parse(localStorage.getItem("rpgState")) || {
   currentMap: "forest",
@@ -274,9 +305,17 @@ function drawMilestones() {
 }
 
 function openMilestone(m) {
-  modalContent.innerHTML = `<input value="${m.title}">`;
+  modalContent.innerHTML = `
+    <input value="${m.title || ""}" placeholder="${milestoneHelp[m.type] || ""}">
+  `;
   const titleInput = modalContent.querySelector("input");
-  titleInput.onchange = e => { m.title = e.target.value; save(); };
+
+  titleInput.oninput = e => {
+    m.title = e.target.value;
+    save();
+  };
+
+
 
   m.tasks.forEach((t, i) => {
     const row = document.createElement("div");
@@ -318,6 +357,7 @@ function openMilestone(m) {
   modalContent.appendChild(add);
 
   const delMilestone = document.createElement("button");
+  delMilestone.className = "danger";
   delMilestone.textContent = "Delete Milestone";
   delMilestone.onclick = () => {
     state.milestones = state.milestones.filter(x => x !== m);
@@ -326,6 +366,7 @@ function openMilestone(m) {
     drawMilestones();
   };
 
+  delMilestone.style.alignSelf = "flex-end";
   modalContent.appendChild(delMilestone);
   modal.style.display = "flex";
 }
@@ -350,18 +391,28 @@ avatar.onclick = e => {
 map.oncontextmenu = e => {
   e.preventDefault();
   contextContent.innerHTML = `
-    <input id="title" placeholder="Title">
+    <input id="title" placeholder="">
     <select id="type">
       ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
     </select>
     <button>Create</button>
   `;
   context.style.display = "flex";
+  
+  const titleInput = document.getElementById("title");
+const typeSelect = document.getElementById("type");
+
+titleInput.placeholder = milestoneHelp[typeSelect.value];
+
+typeSelect.onchange = () => {
+  titleInput.placeholder = milestoneHelp[typeSelect.value];
+};
+
 
   contextContent.querySelector("button").onclick = () => {
     state.milestones.push({
       id: Date.now(),
-      title: document.getElementById("title").value || "Untitled",
+      title: document.getElementById("title").value || "",
       type: document.getElementById("type").value,
       tasks: [],
       x: e.clientX - 24,
