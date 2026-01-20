@@ -174,6 +174,8 @@
 
 <script>
 
+let touchId = null;
+
 let isDraggingAvatar = false;
 
 const maps = {
@@ -224,6 +226,9 @@ function save() {
 
 setMap(state.currentMap || "mountain");
 
+function getTouch(e) {
+  return e.touches[0] || e.changedTouches[0];
+}
 
 function drawAvatar() {
   avatar.style.left = state.avatar.x + "px";
@@ -254,6 +259,15 @@ function drawMilestones() {
       dragOffset.y = e.clientY - m.y;
       e.preventDefault();
     };
+    
+    el.ontouchstart = e => {
+  const t = getTouch(e);
+  dragTarget = m;
+  dragOffset.x = t.clientX - m.x;
+  dragOffset.y = t.clientY - m.y;
+  e.preventDefault();
+};
+
 
     map.appendChild(el);
   });
@@ -359,20 +373,22 @@ map.oncontextmenu = e => {
   };
 };
 
-window.onmousemove = e => {
+window.onmousemove = window.ontouchmove = e => {
   if (!dragTarget) return;
-  dragTarget.x = e.clientX - dragOffset.x;
-  dragTarget.y = e.clientY - dragOffset.y;
+  const p = e.touches ? getTouch(e) : e;
+  dragTarget.x = p.clientX - dragOffset.x;
+  dragTarget.y = p.clientY - dragOffset.y;
   drawAvatar();
   drawMilestones();
 };
 
 
-window.onmouseup = () => {
+
+window.onmouseup = window.ontouchend = () => {
   if (dragTarget) save();
   dragTarget = null;
-  isDraggingAvatar = false;
 };
+
 
 
 avatar.onmousedown = e => {
@@ -381,6 +397,15 @@ avatar.onmousedown = e => {
   dragTarget = state.avatar;
   dragOffset.x = e.clientX - state.avatar.x;
   dragOffset.y = e.clientY - state.avatar.y;
+  e.preventDefault();
+};
+
+avatar.ontouchstart = e => {
+  if (!e.altKey && e.touches.length !== 1) return;
+  const t = getTouch(e);
+  dragTarget = state.avatar;
+  dragOffset.x = t.clientX - state.avatar.x;
+  dragOffset.y = t.clientY - state.avatar.y;
   e.preventDefault();
 };
 
