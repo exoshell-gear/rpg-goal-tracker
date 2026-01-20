@@ -501,9 +501,20 @@ typeSelect.onchange = () => {
 };
 
 window.onmousemove = window.ontouchmove = e => {
+  if (isModalOpen()) return;
   if (!dragTarget) return;
 
   const p = e.touches ? getTouch(e) : e;
+
+  // 👇 THIS IS THE MISSING PIECE
+  if (e.touches) {
+    const dx = Math.abs(p.clientX - touchStartX);
+    const dy = Math.abs(p.clientY - touchStartY);
+    if (dx > 6 || dy > 6) {
+      touchMoved = true;
+    }
+  }
+
   dragTarget.x = p.clientX - dragOffset.x;
   dragTarget.y = p.clientY - dragOffset.y;
 
@@ -514,9 +525,6 @@ window.onmousemove = window.ontouchmove = e => {
     dragTarget._el.style.top = dragTarget.y + "px";
   }
 };
-
-
-
 
 window.ontouchend = () => {
   if (!dragTarget) return;
