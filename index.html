@@ -174,6 +174,8 @@
 
 <script>
 
+let isDraggingAvatar = false;
+
 const maps = {
   mountain: "mountain-map.png",
   temple: "temple-map.png",
@@ -315,7 +317,8 @@ function openMilestone(m) {
 }
 
 avatar.onclick = e => {
-  if (e.altKey) return;
+  if (isDraggingAvatar || e.altKey) return;
+
   modalContent.innerHTML = `
     <input value="${state.avatar.name}">
     <textarea placeholder="Notes">${state.avatar.notes}</textarea>
@@ -328,6 +331,7 @@ avatar.onclick = e => {
   };
   modal.style.display = "flex";
 };
+
 
 map.oncontextmenu = e => {
   e.preventDefault();
@@ -361,17 +365,25 @@ window.onmousemove = e => {
   dragTarget.y = e.clientY - dragOffset.y;
   drawAvatar();
   drawMilestones();
-  save();
 };
 
-window.onmouseup = () => dragTarget = null;
+
+window.onmouseup = () => {
+  if (dragTarget) save();
+  dragTarget = null;
+  isDraggingAvatar = false;
+};
+
 
 avatar.onmousedown = e => {
   if (!e.altKey) return;
+  isDraggingAvatar = true;
   dragTarget = state.avatar;
   dragOffset.x = e.clientX - state.avatar.x;
   dragOffset.y = e.clientY - state.avatar.y;
+  e.preventDefault();
 };
+
 
 modal.onclick = e => {
   if (e.target === modal) modal.style.display = "none";
