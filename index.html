@@ -193,6 +193,8 @@ button.danger:hover {
 
 <script>
 
+let touchMoved = false;
+
 let touchId = null;
 
 let isDraggingAvatar = false;
@@ -310,13 +312,31 @@ function drawMilestones() {
       e.preventDefault();
     };
     
-    el.ontouchstart = e => {
-  const t = getTouch(e);
+el.ontouchstart = e => {
+  if (e.touches.length !== 1) return;
+
+  const t = e.touches[0];
+  touchMoved = false;
+
   dragTarget = m;
   dragOffset.x = t.clientX - m.x;
   dragOffset.y = t.clientY - m.y;
+
   e.preventDefault();
 };
+
+el.ontouchmove = e => {
+  if (!dragTarget) return;
+
+  const t = e.touches[0];
+  touchMoved = true;
+
+  dragTarget.x = t.clientX - dragOffset.x;
+  dragTarget.y = t.clientY - dragOffset.y;
+
+  drawMilestones();
+};
+
 
 
     map.appendChild(el);
@@ -460,9 +480,23 @@ window.onmousemove = window.ontouchmove = e => {
 
 
 
-window.onmouseup = window.ontouchend = () => {
-  if (dragTarget) save();
+window.ontouchend = () => {
+  if (!dragTarget) return;
+
+  if (!touchMoved && dragTarget !== state.avatar) {
+    openMilestone(dragTarget);
+  }
+
+  save();
   dragTarget = null;
+};
+
+window.onmouseup = () => {
+  if (!dragTarget) return;
+
+  save();
+  dragTarget = null;
+  isDraggingAvatar = false;
 };
 
 
