@@ -203,6 +203,10 @@ const maps = {
   volcano: "lava-map.png"
 };
 
+const autoPairs = {
+  enemy: "reward",
+  dragon: "treasure"
+};
 
 const icons = {
   regular: "icons/milestone.png",
@@ -265,6 +269,21 @@ function drawAvatar() {
   avatar.style.left = state.avatar.x + "px";
   avatar.style.top = state.avatar.y + "px";
 }
+
+function createPairedMilestone(type, x, y) {
+  const pairedType = autoPairs[type];
+  if (!pairedType) return;
+
+  state.milestones.push({
+    id: Date.now() + Math.random(),
+    title: "",
+    type: pairedType,
+    tasks: [],
+    x: x + 80,
+    y: y
+  });
+}
+
 
 function drawMilestones() {
   document.querySelectorAll(".milestone").forEach(e => e.remove());
@@ -418,6 +437,12 @@ typeSelect.onchange = () => {
       x: e.clientX - 24,
       y: e.clientY - 24
     });
+    createPairedMilestone(
+  document.getElementById("type").value,
+  e.clientX - 24,
+  e.clientY - 24
+);
+
     save();
     context.style.display = "none";
     drawMilestones();
