@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personal RPG Map</title>
+
+<style>
+
+.panel {
+  background: radial-gradient(circle at top, #181818, #0e0e0e);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+
+.task {
+  display: grid;
+  grid-template-columns: 20px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.task span {
+  font-size: 14px;
+}
+
+.task input[type="checkbox"] {
+  transform: scale(1.1);
+}
+
+.task button {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+}
+
+.task button:hover {
+  color: #ff5555;
+}
+
+.task input:checked + span {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.panel h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: #aaa;
+}
+
+
+  body {
+    margin: 0;
+    background: black;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+
+  #map {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.map-switcher {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  left: auto;
+  z-index: 20;
+  width: auto;
+  max-width: 160px;
+  background: #111;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+
+  #avatar {
+    position: absolute;
+    width: 96px;
+    height: 96px;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .milestone {
+    position: absolute;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .milestone img {
+    width: 96px;
+    height: 96px;
+    pointer-events: none;
+  }
+  
+  .milestone.dragon img {
+  width: 256px;
+  height: 256px;
+}
+
+
+  #modal, #context {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .panel {
+    background: #111;
+    color: white;
+    padding: 20px;
+    width: 360px;
+    border-radius: 8px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    margin-bottom: 8px;
+    background: #222;
+    color: white;
+    border: none;
+    padding: 6px;
+  }
+
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .task span {
+    flex: 1;
+    cursor: pointer;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 8px;
+  }
+</style>
+</head>
+
+<body>
+
+<select id="mapSelect" class="map-switcher">
+  <option value="mountain">Mountain</option>
+  <option value="volcano">Volcano</option>
+</select>
+
+
+<div id="map">
+  <img id="avatar" src="avatar.png">
+</div>
+
+<div id="modal"><div class="panel" id="modalContent"></div></div>
+<div id="context"><div class="panel" id="contextContent"></div></div>
+
+<script>
+
+const maps = {
+  mountain: "mountain-map.png",
+  volcano: "lava-map.png"
+};
+
+
+const icons = {
+  regular: "icons/milestone.png",
+  start: "icons/start.png",
+  enemy: "icons/enemy.png",
+  reward: "icons/reward.png",
+  dragon: "icons/dragon.png",
+  mentor: "icons/mentor.png",
+  sidequest: "icons/sidequest.png",
+  treasure: "icons/treasure.png"
+};
+
+let state = JSON.parse(localStorage.getItem("rpgState")) || {
+  currentMap: "forest",
+  avatar: { x: 120, y: 120, name: "You", notes: "" },
+  milestones: []
+
+};
+
+function setMap(key) {
+  state.currentMap = key;
+  map.style.background = `url("${maps[key]}") center / contain no-repeat`;
+  save();
+}
+
+
+let dragTarget = null;
+let dragOffset = { x: 0, y: 0 };
+
+const map = document.getElementById("map");
+const avatar = document.getElementById("avatar");
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modalContent");
+const context = document.getElementById("context");
+const contextContent = document.getElementById("contextContent");
+
+function save() {
+  localStorage.setItem("rpgState", JSON.stringify(state));
+}
+
+setMap(state.currentMap || "mountain");
+
+
+function drawAvatar() {
+  avatar.style.left = state.avatar.x + "px";
+  avatar.style.top = state.avatar.y + "px";
+}
+
+function drawMilestones() {
+  document.querySelectorAll(".milestone").forEach(e => e.remove());
+
+  state.milestones.forEach(m => {
+    const el = document.createElement("div");
+    el.className = "milestone " + m.type;
+    el.style.left = m.x + "px";
+    el.style.top = m.y + "px";
+
+    const img = document.createElement("img");
+    img.src = icons[m.type];
+    el.appendChild(img);
+
+    el.onclick = e => {
+      if (!e.altKey) openMilestone(m);
+    };
+
+    el.onmousedown = e => {
+      if (!e.altKey) return;
+      dragTarget = m;
+      dragOffset.x = e.clientX - m.x;
+      dragOffset.y = e.clientY - m.y;
+      e.preventDefault();
+    };
+
+    map.appendChild(el);
+  });
+}
+
+function openMilestone(m) {
+  modalContent.innerHTML = `<input value="${m.title}">`;
+  const titleInput = modalContent.querySelector("input");
+  titleInput.onchange = e => { m.title = e.target.value; save(); };
+
+  m.tasks.forEach((t, i) => {
+    const row = document.createElement("div");
+    row.className = "task";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = t.done;
+    cb.onchange = () => { t.done = cb.checked; save(); };
+
+    const text = document.createElement("span");
+    text.textContent = t.text;
+    text.onclick = () => {
+      const val = prompt("Edit task", t.text);
+      if (val !== null) { t.text = val; save(); openMilestone(m); }
+    };
+
+    const del = document.createElement("button");
+    del.textContent = "🗑";
+    del.onclick = () => {
+      m.tasks.splice(i,1);
+      save();
+      openMilestone(m);
+    };
+
+    row.append(cb, text, del);
+    modalContent.appendChild(row);
+  });
+
+  const add = document.createElement("input");
+  add.placeholder = "New task → Enter";
+  add.onkeydown = e => {
+    if (e.key === "Enter" && add.value.trim()) {
+      m.tasks.push({ text: add.value, done: false });
+      save();
+      openMilestone(m);
+    }
+  };
+  modalContent.appendChild(add);
+
+  const delMilestone = document.createElement("button");
+  delMilestone.textContent = "Delete Milestone";
+  delMilestone.onclick = () => {
+    state.milestones = state.milestones.filter(x => x !== m);
+    save();
+    modal.style.display = "none";
+    drawMilestones();
+  };
+
+  modalContent.appendChild(delMilestone);
+  modal.style.display = "flex";
+}
+
+avatar.onclick = e => {
+  if (e.altKey) return;
+  modalContent.innerHTML = `
+    <input value="${state.avatar.name}">
+    <textarea placeholder="Notes">${state.avatar.notes}</textarea>
+  `;
+  modalContent.querySelector("input").onchange = e => {
+    state.avatar.name = e.target.value; save();
+  };
+  modalContent.querySelector("textarea").onchange = e => {
+    state.avatar.notes = e.target.value; save();
+  };
+  modal.style.display = "flex";
+};
+
+map.oncontextmenu = e => {
+  e.preventDefault();
+  contextContent.innerHTML = `
+    <input id="title" placeholder="Title">
+    <select id="type">
+      ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
+    </select>
+    <button>Create</button>
+  `;
+  context.style.display = "flex";
+
+  contextContent.querySelector("button").onclick = () => {
+    state.milestones.push({
+      id: Date.now(),
+      title: document.getElementById("title").value || "Untitled",
+      type: document.getElementById("type").value,
+      tasks: [],
+      x: e.clientX - 24,
+      y: e.clientY - 24
+    });
+    save();
+    context.style.display = "none";
+    drawMilestones();
+  };
+};
+
+window.onmousemove = e => {
+  if (!dragTarget) return;
+  dragTarget.x = e.clientX - dragOffset.x;
+  dragTarget.y = e.clientY - dragOffset.y;
+  drawAvatar();
+  drawMilestones();
+  save();
+};
+
+window.onmouseup = () => dragTarget = null;
+
+avatar.onmousedown = e => {
+  if (!e.altKey) return;
+  dragTarget = state.avatar;
+  dragOffset.x = e.clientX - state.avatar.x;
+  dragOffset.y = e.clientY - state.avatar.y;
+};
+
+modal.onclick = e => {
+  if (e.target === modal) modal.style.display = "none";
+};
+
+context.onclick = e => {
+  if (e.target === context) context.style.display = "none";
+};
+
+drawAvatar();
+drawMilestones();
+
+const mapSelect = document.getElementById("mapSelect");
+mapSelect.value = state.currentMap;
+mapSelect.onchange = e => setMap(e.target.value);
+
+</script>
+
+</body>
+</html>
