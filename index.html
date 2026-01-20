@@ -504,9 +504,14 @@ window.onmousemove = window.ontouchmove = e => {
 window.ontouchend = () => {
   if (!dragTarget) return;
 
-  if (!touchMoved && dragTarget !== state.avatar) {
+  if (!touchMoved) {
+  if (dragTarget === state.avatar) {
+    openAvatar();
+  } else {
     openMilestone(dragTarget);
   }
+}
+
 
   save();
   dragTarget = null;
@@ -532,13 +537,14 @@ avatar.onmousedown = e => {
 };
 
 avatar.ontouchstart = e => {
-  if (!e.altKey && e.touches.length !== 1) return;
   const t = getTouch(e);
+  touchMoved = false;           // ← ADD
   dragTarget = state.avatar;
   dragOffset.x = t.clientX - state.avatar.x;
   dragOffset.y = t.clientY - state.avatar.y;
   e.preventDefault();
 };
+
 
 avatar.ontouchend = e => {
   if (touchMoved) return;
