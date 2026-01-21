@@ -6,6 +6,8 @@
 
 <title>Veronium | RPG Goal Tracker</title>
 
+<link rel="icon" type="image/png" href="favicon.png">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -69,11 +71,6 @@
   border: none;
   border-top: 1px solid rgba(255,255,255,0.08);
   margin: 10px 0;
-}
-
-
-.map-switcher {
-  display: none;
 }
 
 
@@ -152,21 +149,6 @@
   background-size: cover;
 }
 
-.map-switcher {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  left: auto;
-  z-index: 20;
-  width: auto;
-  max-width: 160px;
-  background: #111;
-  color: #fff;
-  border: 1px solid #333;
-  padding: 4px 8px;
-  font-size: 13px;
-}
-
 
   #avatar {
     position: absolute;
@@ -242,6 +224,25 @@ button.danger:hover {
   background: #220;
   border-color: #ff6666;
 }
+
+button.steel {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #333;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button.steel:hover {
+  background: #222;
+  border-color: #555;
+}
+
+
 
 #dock {
   position: fixed;
@@ -337,7 +338,6 @@ button.danger:hover {
 }
 
 
-
 </style>
 </head>
 
@@ -349,15 +349,6 @@ button.danger:hover {
     <div class="mobile-gate-sub">We promise you won’t regret it.</div>
   </div>
 </div>
-
-
-<select id="mapSelect" class="map-switcher">
-  <option value="mountain">Mountain</option>
-  <option value="volcano">Volcano</option>
-  <option value="city">City</option>
-  <option value="temple">Temple</option>
-
-</select>
 
 
 <div id="map">
@@ -920,15 +911,16 @@ document.getElementById("dock").onclick = e => {
 
 
 
-  if (action === "map") {
-    modalContent.innerHTML = `
-      <h3 style="text-align:center;">Choose Map</h3>
-      ${Object.keys(maps).map(k =>
-        `<button onclick="setMap('${k}'); modal.style.display='none'">${k}</button>`
-      ).join("")}
-    `;
-    modal.style.display = "flex";
-  }
+if (action === "map") {
+  modalContent.innerHTML = `
+    <h3 style="text-align:center;">Choose Map</h3>
+    ${Object.keys(maps).map(k =>
+      `<button class="steel" onclick="setMap('${k}'); modal.style.display='none'">${k}</button>`
+    ).join("")}
+  `;
+  modal.style.display = "flex";
+}
+
 
   if (action === "wishlist") {
   modalContent.innerHTML = `
