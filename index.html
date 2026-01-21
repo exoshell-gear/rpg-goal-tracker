@@ -308,11 +308,11 @@ function nameColor(name = "") {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  const hues = [18, 28, 38, 48, 22]; // warm fire tones only
-  const hue = hues[Math.abs(hash) % hues.length];
+  const hue = Math.abs(hash) % 360;
 
-  return `hsl(${hue}, 70%, 65%)`;
+  return `hsl(${hue}, 55%, 65%)`;
 }
+
 
 
 // SUPABASE CLIENT (ONE TIME)
@@ -814,7 +814,7 @@ modal.style.display = "flex";
     sb
       .from("messages")
       .select("username, message, created_at")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       .limit(20)
       .then(res => {
         const box = document.getElementById("campfireMessages");
@@ -822,16 +822,21 @@ modal.style.display = "flex";
           box.innerHTML = "<p>No messages yet.</p>";
           return;
         }
-        box.innerHTML = res.data.map(m => `
-          <p class="cf-msg">
-  <span class="cf-name" style="color:${nameColor(m.username)}">
-  ${m.username || "someone"}
-</span>
+        box.innerHTML = res.data.map(m => {
+  const displayName = (m.username && m.username.trim()) || "someone";
 
-  <span class="cf-text">${m.message}</span>
-</p>
+  return `
+    <p class="cf-msg">
+      <span class="cf-name" style="color:${nameColor(displayName)}">
+        ${displayName}
+      </span>
+      <span class="cf-text">${m.message}</span>
+    </p>
+  `;
+}).join("");
 
-        `).join("");
+box.scrollTop = box.scrollHeight;
+
       });
   };
 
