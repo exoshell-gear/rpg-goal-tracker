@@ -219,10 +219,11 @@
     padding: 6px;
   }
 
-  button {
-    width: 100%;
-    margin-top: 8px;
-  }
+#modal button,
+#context button {
+  width: 100%;
+  margin-top: 8px;
+}
   
   button.danger {
   width: auto;
@@ -260,6 +261,9 @@ button.danger:hover {
   color: #fff;
   font-size: 18px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #dock button:hover {
@@ -268,6 +272,28 @@ button.danger:hover {
 
 #dock button:active {
   transform: translateY(1px);
+}
+
+/* Ensure task delete buttons never become full-width */
+.task button {
+  width: auto !important;
+  margin-top: 0 !important;
+  background: none;
+}
+
+/* Wishlist uses task UI but without checkbox column */
+#wishlistItems .task {
+  grid-template-columns: minmax(0, 1fr) 28px;
+}
+
+/* Gemstone dock icon*/
+.dock-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+  pointer-events: none;
 }
 
 
@@ -295,7 +321,9 @@ button.danger:hover {
 <div id="dock">
   <button data-action="menu">❔</button>
   <button data-action="map">🗺</button>
-  <button data-action="wishlist">🎒</button>
+<button data-action="wishlist">
+  <img src="icons/reward-dock.png" class="dock-icon">
+</button>
   <button data-action="campfire">🔥</button>
 </div>
 
@@ -370,12 +398,12 @@ const icons = {
 
 const milestoneHelp = {
   regular: "A step in the journey",
-  start: "Your current state",
+  start: "The journey begins",
   enemy: "Something you are avoiding",
   dragon: "The big end goal",
   treasure: "Something nice you wouldn't normally do for yourself",
-  reward: "Your guilty pleasure",
-  mentor: "A book, a coach, a friend",
+  reward: "A small reward",
+  mentor: "A book, a coach, or a friend",
   sidequest: "Optional mini journey"
 };
 
@@ -383,7 +411,8 @@ const milestoneHelp = {
 let state = JSON.parse(localStorage.getItem("rpgState")) || {
   currentMap: "mountain",
   avatar: { x: 120, y: 120, name: "You", notes: "" },
-  milestones: []
+  milestones: [],
+  wishlist: []
 
 };
 
@@ -405,8 +434,10 @@ const context = document.getElementById("context");
 const contextContent = document.getElementById("contextContent");
 
 function save() {
+  if (!state.wishlist) state.wishlist = [];
   localStorage.setItem("rpgState", JSON.stringify(state));
 }
+
 
 setMap(state.currentMap || "mountain");
 
@@ -507,14 +538,48 @@ function openMilestone(m) {
   killDrag();
 
   modalContent.innerHTML = `
-    <input value="${m.title || ""}" placeholder="${milestoneHelp[m.type] || ""}">
-  `;
-  const titleInput = modalContent.querySelector("input");
+  <h3 id="milestoneTitle" style="cursor:pointer;">
+    ${m.title || milestoneHelp[m.type] || "Untitled"}
+  </h3>
+`;
 
-  titleInput.oninput = e => {
-    m.title = e.target.value;
+const titleEl = document.getElementById("milestoneTitle");
+
+titleEl.onclick = () => {
+  const val = prompt("Edit title", m.title || "");
+  if (val !== null) {
+    m.title = val.trim();
     save();
+    openMilestone(m);
+  }
+};
+
+  // Wishlist helper for reward milestones
+if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
+  const select = document.createElement("select");
+
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = "Add from wishlist…";
+  select.appendChild(empty);
+
+  state.wishlist.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item;
+    opt.textContent = item;
+    select.appendChild(opt);
+  });
+
+  select.onchange = () => {
+    if (!select.value) return;
+
+    m.tasks.push({ text: select.value, done: false, fromWishlist: true });
+    save();
+    openMilestone(m);
   };
+
+  modalContent.appendChild(select);
+}
 
 
 
@@ -525,7 +590,16 @@ function openMilestone(m) {
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = t.done;
-    cb.onchange = () => { t.done = cb.checked; save(); };
+    cb.onchange = () => {
+  t.done = cb.checked;
+
+  if (t.fromWishlist && t.done) {
+    state.wishlist = state.wishlist.filter(w => w !== t.text);
+  }
+
+  save();
+};
+
 
     const text = document.createElement("span");
     text.textContent = t.text;
@@ -547,7 +621,10 @@ function openMilestone(m) {
   });
 
   const add = document.createElement("input");
-  add.placeholder = "New task → Enter";
+  add.placeholder =
+  (m.type === "reward" || m.type === "treasure")
+    ? "Add reward → Enter"
+    : "New task → Enter";
   add.onkeydown = e => {
     if (e.key === "Enter" && add.value.trim()) {
       m.tasks.push({ text: add.value, done: false });
@@ -594,6 +671,8 @@ avatar.onclick = e => {
 map.oncontextmenu = e => {
   e.preventDefault();
   contextContent.innerHTML = `
+    <h3 style="text-align:center;">NEW MILESTONE</h3>
+    
     <input id="title" placeholder="">
     <select id="type">
       ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
@@ -786,12 +865,14 @@ document.getElementById("dock").onclick = e => {
   }
 
   if (action === "wishlist") {
-    modalContent.innerHTML = `
-      <h3>Wishlist</h3>
-      <p>Coming next.</p>
-    `;
-    modal.style.display = "flex";
-  }
+  modalContent.innerHTML = `
+    <h3>Wishlist</h3>
+    <div id="wishlistItems"></div>
+    <input id="wishlistInput" placeholder="Add something you want later → Enter">
+  `;
+  modal.style.display = "flex";
+  renderWishlist();
+}
 
 if (action === "campfire") {
   modalContent.innerHTML = `
@@ -862,6 +943,47 @@ box.scrollTop = box.scrollHeight;
 
 
 };
+
+function renderWishlist() {
+  const box = document.getElementById("wishlistItems");
+  if (!box) return;
+
+  if (!state.wishlist) state.wishlist = [];
+
+  box.innerHTML = "";
+
+  state.wishlist.forEach((item, i) => {
+    const row = document.createElement("div");
+    row.className = "task";
+
+
+    const text = document.createElement("span");
+    text.textContent = item;
+
+    const del = document.createElement("button");
+    del.textContent = "🗑";
+    del.onclick = () => {
+      state.wishlist.splice(i, 1);
+      save();
+      renderWishlist();
+    };
+
+    row.append(text, del);
+    box.appendChild(row);
+  });
+
+  const input = document.getElementById("wishlistInput");
+  if (!input) return;
+
+  input.onkeydown = e => {
+    if (e.key === "Enter" && input.value.trim()) {
+      state.wishlist.push(input.value.trim());
+      input.value = "";
+      save();
+      renderWishlist();
+    }
+  };
+}
 
 
 drawAvatar();
