@@ -296,11 +296,55 @@ button.danger:hover {
   pointer-events: none;
 }
 
+#mobileGate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+
+#mobileGate h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+#mobileGate p {
+  opacity: 0.8;
+}
+
+/* Phone only (not tablets) */
+@media (max-width: 767px) {
+  #mobileGate {
+    display: flex;
+  }
+
+  #map,
+  #dock,
+  #modal,
+  #context {
+    display: none !important;
+  }
+}
+
 
 </style>
 </head>
 
 <body>
+
+  <div id="mobileGate">
+  <div>
+    <h2>Try Veronium on desktop.</h2>
+    <p>We promise you won’t regret it.</p>
+  </div>
+</div>
+
 
 <select id="mapSelect" class="map-switcher">
   <option value="mountain">Mountain</option>
@@ -546,13 +590,29 @@ function openMilestone(m) {
 const titleEl = document.getElementById("milestoneTitle");
 
 titleEl.onclick = () => {
-  const val = prompt("Edit title", m.title || "");
-  if (val !== null) {
-    m.title = val.trim();
+  const input = document.createElement("input");
+  input.value = m.title || "";
+  input.style.fontSize = "16px";
+  input.style.width = "100%";
+
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const saveTitle = () => {
+    m.title = input.value.trim();
     save();
     openMilestone(m);
-  }
+  };
+
+  input.onkeydown = e => {
+    if (e.key === "Enter") saveTitle();
+    if (e.key === "Escape") openMilestone(m);
+  };
+
+  input.onblur = saveTitle;
 };
+
 
   // Wishlist helper for reward milestones
 if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
@@ -560,7 +620,7 @@ if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
 
   const empty = document.createElement("option");
   empty.value = "";
-  empty.textContent = "Add from wishlist…";
+  empty.textContent = "Choose reward from wishlist";
   select.appendChild(empty);
 
   state.wishlist.forEach(item => {
