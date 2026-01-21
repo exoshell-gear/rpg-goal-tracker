@@ -302,6 +302,19 @@ button.danger:hover {
 
 <script>
 
+function nameColor(name = "") {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const hues = [18, 28, 38, 48, 22]; // warm fire tones only
+  const hue = hues[Math.abs(hash) % hues.length];
+
+  return `hsl(${hue}, 70%, 65%)`;
+}
+
+
 // SUPABASE CLIENT (ONE TIME)
 const SUPABASE_URL = "https://augbhhspjpmlrirurxxt.supabase.co";
 const SUPABASE_KEY = "sb_publishable_EE8xYsgubn80NnstXUVhxA__NQR-Tcu";
@@ -811,7 +824,10 @@ modal.style.display = "flex";
         }
         box.innerHTML = res.data.map(m => `
           <p class="cf-msg">
-  <span class="cf-name">${m.username || "Protagonist"}</span>
+  <span class="cf-name" style="color:${nameColor(m.username)}">
+  ${m.username || "someone"}
+</span>
+
   <span class="cf-text">${m.message}</span>
 </p>
 
