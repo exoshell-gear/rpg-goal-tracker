@@ -2,9 +2,73 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Veronium | RPG Goal Tracker</title>
+<title>Personal RPG Map</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+
+/* Campfire modal */
+#campfire {
+  background: radial-gradient(
+    circle at top center,
+    #2a1a12 0%,
+    #120a06 60%,
+    #050303 100%
+  );
+  box-shadow:
+    0 0 40px rgba(255,120,40,.15),
+    inset 0 0 60px rgba(0,0,0,.8);
+  border-radius: 12px;
+}
+
+.cf-msg {
+  margin: 10px 0;
+  line-height: 1.5;
+  font-size: 14px;
+  color: #ddd;
+}
+
+.cf-name {
+  color: #ffb36b;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.cf-text {
+  color: #e6e6e6;
+}
+
+#cfName, #cfMsg {
+  background: rgba(0,0,0,.4);
+  border: 1px solid rgba(255,140,60,.15);
+  border-radius: 6px;
+}
+
+#cfName {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+
+#cfMsg {
+  min-height: 44px;
+  max-height: 88px;
+  resize: none;
+}
+
+#campfireMessages {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.cf-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin: 10px 0;
+}
+
 
 .map-switcher {
   display: none;
@@ -232,11 +296,21 @@ button.danger:hover {
   <button data-action="menu">❔</button>
   <button data-action="map">🗺</button>
   <button data-action="wishlist">🎒</button>
-  <button data-action="future">⭐</button>
+  <button data-action="campfire">🔥</button>
 </div>
 
 
 <script>
+
+// SUPABASE CLIENT (ONE TIME)
+const SUPABASE_URL = "https://augbhhspjpmlrirurxxt.supabase.co";
+const SUPABASE_KEY = "sb_publishable_EE8xYsgubn80NnstXUVhxA__NQR-Tcu";
+
+const sb = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -577,7 +651,7 @@ window.ontouchend = () => {
 
   if (!touchMoved) {
   if (dragTarget === state.avatar) {
-    openAvatar();
+   // openAvatar();
   } else {
     openMilestone(dragTarget);
   }
@@ -646,8 +720,15 @@ avatar.ontouchend = e => {
 };
 
 modal.onclick = e => {
-  if (e.target === modal) modal.style.display = "none";
+  if (e.target === modal) {
+    modal.style.display = "none";
+    if (window._campfirePoll) {
+      clearInterval(window._campfirePoll);
+      window._campfirePoll = null;
+    }
+  }
 };
+
 
 
 context.onclick = e => {
@@ -699,13 +780,66 @@ document.getElementById("dock").onclick = e => {
     modal.style.display = "flex";
   }
 
-  if (action === "future") {
-    modalContent.innerHTML = `
-      <h3>Reserved</h3>
-      <p>This slot is intentionally empty.</p>
-    `;
-    modal.style.display = "flex";
-  }
+if (action === "campfire") {
+  modalContent.innerHTML = `
+  <h3 style="text-align:center;">Join the Campfire</h3>
+
+  <div id="campfireMessages">Loading…</div>
+
+  <hr class="cf-divider">
+
+  <textarea id="cfMsg" placeholder="Leave a thought…"></textarea>
+
+  <input id="cfName" placeholder="Name (optional)">
+
+  <button id="cfSend">Leave Message</button>
+`;
+modal.style.display = "flex";
+
+
+  const loadMessages = () => {
+    sb
+      .from("messages")
+      .select("username, message, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(res => {
+        const box = document.getElementById("campfireMessages");
+        if (!res.data || res.data.length === 0) {
+          box.innerHTML = "<p>No messages yet.</p>";
+          return;
+        }
+        box.innerHTML = res.data.map(m => `
+          <p class="cf-msg">
+  <span class="cf-name">${m.username || "Protagonist"}</span>
+  <span class="cf-text">${m.message}</span>
+</p>
+
+        `).join("");
+      });
+  };
+
+  loadMessages();
+  
+  window._campfirePoll = setInterval(loadMessages, 15000);
+
+
+  document.getElementById("cfSend").onclick = () => {
+    const name = document.getElementById("cfName").value || "anon";
+    const msg = document.getElementById("cfMsg").value.trim();
+    if (!msg) return;
+
+    sb.from("messages").insert({
+      username: name,
+      message: msg
+    }).then(() => {
+      document.getElementById("cfMsg").value = "";
+      loadMessages();
+    });
+  };
+}
+
+
 };
 
 
@@ -715,6 +849,17 @@ drawMilestones();
 const mapSelect = document.getElementById("mapSelect");
 mapSelect.value = state.currentMap;
 mapSelect.onchange = e => setMap(e.target.value);
+
+// --- SUPABASE READ TEST ---
+sb
+  .from("messages")
+  .select("username, message, created_at")
+  .order("created_at", { ascending: false })
+  .limit(5)
+  .then(res => {
+    console.log("Campfire messages:", res);
+  });
+
 
 </script>
 
