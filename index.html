@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Veronium | RPG Goal Tracker</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -296,41 +298,44 @@ button.danger:hover {
   pointer-events: none;
 }
 
-#mobileGate {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #fff;
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
+/* ===== MOBILE GATE (phones only) ===== */
+#mobileGate{
+  display:none;               /* default hidden = no flicker */
+  position:fixed;
+  inset:0;
+  background:#000;
+  color:#fff;
+  z-index:999999;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:24px;
 }
 
-#mobileGate h2 {
-  font-size: 22px;
-  margin-bottom: 12px;
+#mobileGate > div{
+  max-width:320px;
 }
 
-#mobileGate p {
-  opacity: 0.8;
+#mobileGate .mobile-gate-title,
+#mobileGate h2{
+  font-size:22px;
+  font-weight:700;
+  margin:0 0 12px;
 }
 
-/* Phone only (not tablets) */
-@media (max-width: 767px) {
-  #mobileGate {
-    display: flex;
-  }
-
-  #map,
-  #dock,
-  #modal,
-  #context {
-    display: none !important;
-  }
+#mobileGate .mobile-gate-sub,
+#mobileGate p{
+  font-size:14px;
+  opacity:.8;
+  margin:0;
 }
+
+/* phones only (and touch screens) */
+@media (max-width: 600px) and (pointer: coarse){
+  #mobileGate{ display:flex; }
+  body > :not(#mobileGate){ display:none !important; } /* hide the app underneath */
+}
+
 
 
 </style>
@@ -338,10 +343,10 @@ button.danger:hover {
 
 <body>
 
-  <div id="mobileGate">
-  <div>
-    <h2>Try Veronium on desktop.</h2>
-    <p>We promise you won’t regret it.</p>
+<div id="mobileGate">
+  <div class="mobile-gate-content">
+    <div class="mobile-gate-title">Try Veronium on desktop.</div>
+    <div class="mobile-gate-sub">We promise you won’t regret it.</div>
   </div>
 </div>
 
@@ -373,6 +378,7 @@ button.danger:hover {
 
 
 <script>
+
 
 function nameColor(name = "") {
   let hash = 0;
