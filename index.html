@@ -410,7 +410,8 @@ button.steel:hover {
 
 <div id="dock">
   <button data-action="menu">❔</button>
-  <button data-action="map">🗺</button>
+  <button data-action="map">🌍</button>
+  <button data-action="character">🙂</button>
 <button data-action="wishlist">
   <img src="icons/reward-dock.png" class="dock-icon">
 </button>
@@ -471,6 +472,12 @@ const maps = {
   volcano: "lava-map.png"
 };
 
+const characters = {
+  male: "avatar.png",
+  female_blonde: "avatar-female.png"
+};
+
+
 const autoPairs = {
   enemy: "reward",
   dragon: "treasure"
@@ -501,6 +508,7 @@ const milestoneHelp = {
 
 let state = JSON.parse(localStorage.getItem("rpgState")) || {
   currentMap: "mountain",
+  character: "male",
   avatar: { x: 120, y: 120, name: "You", notes: "" },
   milestones: [],
   wishlist: []
@@ -524,6 +532,12 @@ const modalContent = document.getElementById("modalContent");
 const context = document.getElementById("context");
 const contextContent = document.getElementById("contextContent");
 
+function setCharacter(key) {
+  state.character = key;
+  avatar.src = characters[key];
+  save();
+}
+
 function save() {
   if (!state.wishlist) state.wishlist = [];
   localStorage.setItem("rpgState", JSON.stringify(state));
@@ -531,6 +545,11 @@ function save() {
 
 
 setMap(state.currentMap || "mountain");
+
+if (state.character && characters[state.character]) {
+  avatar.src = characters[state.character];
+}
+
 
 function getTouch(e) {
   return e.touches[0] || e.changedTouches[0];
@@ -540,6 +559,13 @@ function drawAvatar() {
   avatar.style.left = state.avatar.x + "px";
   avatar.style.top = state.avatar.y + "px";
 }
+
+function setCharacter(key) {
+  state.character = key;
+  avatar.src = characters[key];
+  save();
+}
+
 
 function createPairedMilestone(type, x, y) {
   const pairedType = autoPairs[type];
@@ -970,6 +996,29 @@ if (action === "map") {
   `;
   modal.style.display = "flex";
 }
+
+if (action === "character") {
+  modalContent.innerHTML = `
+    <h3 style="text-align:center;">Choose Character</h3>
+    <div style="display:flex; gap:12px; justify-content:center;">
+      ${Object.keys(characters).map(k => `
+        <img
+          src="${characters[k]}"
+          style="
+            width:64px;
+            height:64px;
+            cursor:pointer;
+            border:${state.character === k ? '2px solid #fff' : '2px solid transparent'};
+            border-radius:6px;
+          "
+          onclick="setCharacter('${k}'); modal.style.display='none'"
+        >
+      `).join("")}
+    </div>
+  `;
+  modal.style.display = "flex";
+}
+
 
 
   if (action === "wishlist") {
