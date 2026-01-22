@@ -31,21 +31,23 @@
 
     /* Headings */
     h3 {
-      color: #fff;
-      margin-top: 0;
-      margin-bottom: 12px;
-      font-size: 14px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
+  color: #ffb36b;
+  margin-top: 28px;
+  margin-bottom: 14px;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 
     h4 {
-      color: #ccc;
-      margin-top: 22px;
-      margin-bottom: 6px;
-      font-size: 13px;
-      letter-spacing: 0.04em;
-    }
+  color: #9bdcff;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 
     /* Text */
     p, li {
@@ -56,6 +58,19 @@
       padding-left: 18px;
       margin-top: 6px;
     }
+    /* HR lines  */
+    hr {
+  border: none;
+  height: 1px;
+  margin: 24px 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255,255,255,0.12),
+    transparent
+  );
+}
+
 
     /* Subtle divider at end (scroll / tome feel) */
     .tome::after {
@@ -77,7 +92,12 @@
 
   <div class="tome">
 
-    <h3>How To Play</h3>
+    <h1>HOW TO PLAY</h1>
+
+    <h3>CONTROLS</h3>
+
+<p>Right-click → Add new milestone</p>
+<p>Alt/Option + click & drag → Move milestone or Avatar</p>
     
     <img
   src="example-board.png"
@@ -93,20 +113,11 @@
 
 <p>Veronium is a goal-tracking system built to help you accomplish goals that would otherwise feel impossible.</p>
 
-<p>Turn your life into a video game, fight dragons, earn rewards, and accomplish your goals. </p>
-
-<p>
-You move everything by hand on purpose.
-Nothing happens unless <b>you decide it happened</b>.
-</p>
+<p>Fight dragons, earn rewards, and accomplish your goals. </p>
 
 <hr>
 
-<h4>Step 1 — Add the Dragon (Your Big Goal)</h4>
-
-<p>
-The first thing you should do is add a <b>Dragon</b>.
-</p>
+<h3>Step 1 — Add the Dragon</h3>
 
 <p>
 Right-click on the map → choose <b>Dragon</b> → place it at the end of the path.
@@ -122,22 +133,12 @@ A good dragon usually takes <b>3–6 months</b>.
 </p>
 
 <p>
-Examples:
-</p>
-
-<ul>
-  <li>Lose 20 lbs</li>
-  <li>Finish a big project</li>
-  <li>Build a habit you keep avoiding</li>
-</ul>
-
-<p>
-If it makes you a little nervous, you picked the right goal.
+Example: Lose 20 lbs
 </p>
 
 <hr>
 
-<h4>Step 2 — Set the Treasure (Your Big Reward)</h4>
+<h3>Step 2 — Set the Treasure</h3>
 
 <p>
 When you place a dragon, a <b>Treasure</b> (trophy) appears automatically.
@@ -153,22 +154,12 @@ This should be something you normally would <b>not</b> do for yourself.
 </p>
 
 <p>
-Examples:
-</p>
-
-<ul>
-  <li>A trip</li>
-  <li>A new watch</li>
-  <li>A big celebration</li>
-</ul>
-
-<p>
-You can only claim this treasure <b>after</b> the dragon is defeated.
+Examples: A trip to Mexico or a new watch
 </p>
 
 <hr>
 
-<h4>Step 3 — Add Your Starting Point</h4>
+<h3>Step 3 — Add Your Starting Point</h3>
 
 <p>
 Now add a <b>Start</b> milestone at the beginning of the path.
@@ -189,17 +180,12 @@ Examples:
   <li>Idea only, no action taken</li>
 </ul>
 
-<p>
-This is not about judging yourself.
-It’s just the starting line.
-</p>
-
 <hr>
 
-<h4>Step 4 — Build the Path</h4>
+<h3>Step 4 — Build the Path</h3>
 
 <p>
-Now fill in the space between the start and the dragon.
+Now fill in the space between the start and the dragon with milestones.
 </p>
 
 <p>
@@ -224,8 +210,8 @@ Example:
 
 <ul>
   <li>Lose 20 lbs (Dragon)</li>
-  <li>Lose 10 lbs</li>
-  <li>Go to the gym regularly</li>
+  <li>Workout 4X/week for 3 months</li>
+  <li>Get a diet plan</li>
   <li>Get a workout plan</li>
   <li>Get a gym membership</li>
   <li>20 lbs overweight (Start)</li>
@@ -233,9 +219,9 @@ Example:
 
 <hr>
 
-<h4>Milestones vs Enemies</h4>
+<h3>Milestones vs Enemies</h3>
 
-<p><b>Milestones</b> are normal steps.</p>
+<h4><b>Milestones</b> are normal steps.</h4>
 
 <p>
 Use them for things that need to be done, but aren’t scary.
@@ -246,14 +232,11 @@ Examples:
 </p>
 
 <ul>
-  <li>Buy gym clothes</li>
-  <li>Sign up for something</li>
-  <li>Read a book</li>
+  <li>Get a gym membership</li>
+  <li>Get a workout plan</li>
 </ul>
 
-<hr>
-
-<p><b>Enemies</b> are things you are avoiding.</p>
+<h4><b>Enemies</b> are things you are avoiding.</h4>
 
 <p>
 Use an enemy when the task is something you:
@@ -266,27 +249,20 @@ Use an enemy when the task is something you:
 </ul>
 
 <p>
-Example:
+Examples:
 </p>
 
 <ul>
   <li>Your first day at the gym</li>
+  <li>Throwing out all junk food</li>
 </ul>
-
-<p>
-Enemies represent fear or resistance — not difficulty.
-</p>
 
 <hr>
 
-<h4>Enemy Rewards (Small Treats)</h4>
+<h3>Rewards</h3>
 
 <p>
-When you add an enemy, a small reward appears automatically.
-</p>
-
-<p>
-This is because most people forget to reward themselves.
+When you add an enemy, a small reward appears automatically. If you are like me, you probably forget to reward yourself.
 </p>
 
 <p>
@@ -305,24 +281,15 @@ Examples:
 
 <ul>
   <li>Watch your favorite show</li>
-  <li>Eat your favorite food</li>
-  <li>Take a night off</li>
+  <li>Solo night out</li>
 </ul>
-
-<p>
-You earn these by defeating enemies.
-</p>
 
 <hr>
 
-<h4>Tasks Inside a Milestone</h4>
+<h3>Tasks Inside a Milestone</h3>
 
 <p>
 Tasks are things that must be done <b>before</b> you move forward.
-</p>
-
-<p>
-They help keep steps in the right order.
 </p>
 
 <p>
@@ -335,14 +302,10 @@ You can’t go to the gym before you get a gym membership.
 
 <hr>
 
-<h4>Moving Your Character</h4>
+<h3>Moving Your Character</h3>
 
 <p>
-Your character represents <b>you</b>.
-</p>
-
-<p>
-Move your character when:
+Your character represents <b>you</b>. Move your character when:
 </p>
 
 <ul>
@@ -351,54 +314,16 @@ Move your character when:
   <li>You want to recognize progress</li>
 </ul>
 
-<p>
-There are no rules.
-It’s a visual reminder, not a score.
-</p>
-
 <hr>
 
-<h4>How Often to Use This</h4>
+<h3>Why This Works</h3>
 
 <p>
-As much or as little as you want.
+Veronium lets you break down difficult goals into smaller milestones, making them feel within reach.
 </p>
 
 <p>
-You can use this daily, weekly, or only when you feel stuck.
-</p>
-
-<p>
-There is no “correct” schedule.
-</p>
-
-<hr>
-
-<h4>If You Do Something Wrong</h4>
-
-<p>
-You can’t fail this.
-</p>
-
-<p>
-Nothing is locked.
-Nothing is permanent.
-</p>
-
-<p>
-If your goal changes, change the map.
-</p>
-
-<p>
-If you move things too early, move them back.
-</p>
-
-<p>
-This is not a test.
-</p>
-
-<p>
-The only wrong way to use this is to stop being honest with yourself.
+It turns your life into a video game with checkpoints and rewards you for defeating enemies. 
 </p>
 
 
