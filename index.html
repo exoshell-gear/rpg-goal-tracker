@@ -1160,6 +1160,13 @@ sb
     console.log("Campfire messages:", res);
   });
 
+  /* Automatically refresh  */
+  const AUTO_REFRESH_MINUTES = 30;
+
+setInterval(() => {
+  location.reload();
+}, AUTO_REFRESH_MINUTES * 60 * 1000);
+
 
 </script>
 
