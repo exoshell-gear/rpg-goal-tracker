@@ -168,6 +168,9 @@
     width: 96px;
     height: 96px;
     pointer-events: none;
+
+    /* readability shadow */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.85));
   }
   
   .milestone.dragon img {
@@ -218,6 +221,7 @@
   border: 1px solid #333;
   font-size: 13px;
   cursor: pointer;
+  width: auto;
 }
 
 button.danger:hover {
@@ -387,6 +391,14 @@ button.steel:hover {
   }
 }
 
+.milestone.completed img {
+  animation: none !important;
+  /* filter: none !important; */
+
+/* readability shadow */
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.65));
+
+}
 
 </style>
 </head>
@@ -395,8 +407,9 @@ button.steel:hover {
 
 <div id="mobileGate">
   <div class="mobile-gate-content">
+    <p><div><img src="icons/reward-dock.png" class="dock-icon"></div></p>
     <div class="mobile-gate-title">Try Veronium on desktop.</div>
-    <div class="mobile-gate-sub">We promise you won’t regret it.</div>
+    <div class="mobile-gate-sub">Just trust me on this.</div>
   </div>
 </div>
 
@@ -478,7 +491,7 @@ const maps = {
 
 const characters = {
   male: "avatar.png",
-  female_blonde: "avatar-female.png"
+  female: "avatar-female.png"
 };
 
 
@@ -497,6 +510,13 @@ const icons = {
   sidequest: "icons/sidequest.png",
   treasure: "icons/treasure.png"
 };
+
+const doneIcons = {
+  enemy: "icons/enemy-done.png",
+  dragon: "icons/dragon-done.png",
+  regular: "icons/milestone-done.png"
+};
+
 
 const milestoneHelp = {
   regular: "A step in the journey",
@@ -536,12 +556,6 @@ const modalContent = document.getElementById("modalContent");
 const context = document.getElementById("context");
 const contextContent = document.getElementById("contextContent");
 
-function setCharacter(key) {
-  state.character = key;
-  avatar.src = characters[key];
-  save();
-}
-
 function save() {
   if (!state.wishlist) state.wishlist = [];
   localStorage.setItem("rpgState", JSON.stringify(state));
@@ -570,6 +584,10 @@ function setCharacter(key) {
   save();
 }
 
+function isMilestoneComplete(m) {
+  if (!m.tasks || m.tasks.length === 0) return false;
+  return m.tasks.every(t => t.done);
+}
 
 function createPairedMilestone(type, x, y) {
   const pairedType = autoPairs[type];
@@ -597,7 +615,15 @@ function drawMilestones() {
     el.style.top = m.y + "px";
 
     const img = document.createElement("img");
-    img.src = icons[m.type];
+    const completed = isMilestoneComplete(m);
+
+if (completed && doneIcons[m.type]) {
+  img.src = doneIcons[m.type];
+  el.classList.add("completed");
+} else {
+  img.src = icons[m.type];
+}
+
     el.appendChild(img);
 
     el.onclick = e => {
@@ -611,6 +637,7 @@ function drawMilestones() {
       dragOffset.y = e.clientY - m.y;
       e.preventDefault();
     };
+
     
 el.ontouchstart = e => {
   if (isModalOpen()) return;
@@ -735,6 +762,7 @@ if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
   }
 
   save();
+  drawMilestones(); // 👈 THIS WAS MISSING
 };
 
 
@@ -808,45 +836,41 @@ avatar.onclick = e => {
 map.oncontextmenu = e => {
   e.preventDefault();
   contextContent.innerHTML = `
-    <h3 style="text-align:center;">NEW MILESTONE</h3>
-    
-    <input id="title" placeholder="">
-    <select id="type">
-      ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
-    </select>
-    <button>Create</button>
-  `;
+  <h3 style="text-align:center;">NEW MILESTONE</h3>
+
+  <select id="type">
+    ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
+  </select>
+
+  <button>Create</button>
+`;
+
   context.style.display = "flex";
   
-  const titleInput = document.getElementById("title");
-const typeSelect = document.getElementById("type");
 
-titleInput.placeholder = milestoneHelp[typeSelect.value];
+contextContent.querySelector("button").onclick = () => {
+  const type = document.getElementById("type").value;
 
-typeSelect.onchange = () => {
-  titleInput.placeholder = milestoneHelp[typeSelect.value];
+  const m = {
+    id: Date.now(),
+    title: "",
+    type,
+    tasks: [],
+    x: e.clientX - 24,
+    y: e.clientY - 24
+  };
+
+  state.milestones.push(m);
+
+  createPairedMilestone(type, m.x, m.y);
+
+  save();
+  context.style.display = "none";
+
+  drawMilestones();
+  openMilestone(m); // 👈 THIS IS THE KEY
 };
 
-
-  contextContent.querySelector("button").onclick = () => {
-    state.milestones.push({
-      id: Date.now(),
-      title: document.getElementById("title").value || "",
-      type: document.getElementById("type").value,
-      tasks: [],
-      x: e.clientX - 24,
-      y: e.clientY - 24
-    });
-    createPairedMilestone(
-  document.getElementById("type").value,
-  e.clientX - 24,
-  e.clientY - 24
-);
-
-    save();
-    context.style.display = "none";
-    drawMilestones();
-  };
 };
 
 window.onmousemove = window.ontouchmove = e => {
@@ -1163,13 +1187,6 @@ sb
   .then(res => {
     console.log("Campfire messages:", res);
   });
-
-  /* Automatically refresh  */
-  const AUTO_REFRESH_MINUTES = 30;
-
-setInterval(() => {
-  location.reload();
-}, AUTO_REFRESH_MINUTES * 60 * 1000);
 
 
 </script>
