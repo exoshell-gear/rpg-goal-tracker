@@ -221,7 +221,6 @@
   border: 1px solid #333;
   font-size: 13px;
   cursor: pointer;
-  width: auto;
 }
 
 button.danger:hover {
@@ -399,6 +398,90 @@ button.steel:hover {
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.65));
 
 }
+/* Quest sidebar styles */
+#questSidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  /* Match the dark, gradient styling of the instructions page */
+  background: linear-gradient(#1b1b1b, #0f0f0f);
+  /* subtle inner border and stronger outer shadow like the tome container */
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 4px 0 12px rgba(0,0,0,0.6);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  border-radius: 0 6px 6px 0;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 40;
+}
+
+#questSidebar.open {
+  transform: translateX(0);
+}
+
+#questSidebar h3 {
+  margin: 16px;
+  font-size: 15px;
+  text-align: center;
+  color: #ffb36b;
+  /* match instructions headings */
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#questList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.quest-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  /* lighter divider to match tone */
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.quest-item.active {
+  background: rgba(255,255,255,0.08);
+}
+
+  .quest-item input {
+  /* limit the rename area so clicking outside can select the quest */
+  /* shrink further so there is more clickable area to select the quest */
+  /* further reduce rename area to make selecting easier */
+  width: 50%;
+  flex: none;
+  border: none;
+  background: transparent;
+  color: #ddd;
+  font-size: 14px;
+}
+
+.quest-item input:focus {
+  outline: 1px solid #444;
+}
+
+#addQuestButton {
+  /* reposition near heading; stylize to stand out */
+  margin: 0 16px 12px 16px;
+  padding: 10px 14px;
+  background: linear-gradient(#25465a, #18334a);
+  color: #9bdcff;
+  border: 1px solid #0d2538;
+  border-radius: 4px;
+  width: auto;
+  cursor: pointer;
+}
+
+#addQuestButton:hover {
+  background: linear-gradient(#2e5a75, #204a63);
+}
 
 </style>
 </head>
@@ -421,6 +504,14 @@ button.steel:hover {
 <div id="modal"><div class="panel" id="modalContent"></div></div>
 <div id="context"><div class="panel" id="contextContent"></div></div>
 
+<!-- Quest Sidebar -->
+<div id="questSidebar">
+  <h3>Quests</h3>
+  <!-- Move the New Quest button below the heading so it's easy to find -->
+  <button id="addQuestButton">New Quest</button>
+  <div id="questList"></div>
+</div>
+
 <div id="dock">
   <button data-action="menu">❔</button>
   <button data-action="map">🌍</button>
@@ -429,6 +520,7 @@ button.steel:hover {
   <img src="icons/reward-dock.png" class="dock-icon">
 </button>
   <button data-action="campfire">🔥</button>
+  <button data-action="quests">📜</button>
 </div>
 
 
@@ -452,10 +544,17 @@ function nameColor(name = "") {
 const SUPABASE_URL = "https://augbhhspjpmlrirurxxt.supabase.co";
 const SUPABASE_KEY = "sb_publishable_EE8xYsgubn80NnstXUVhxA__NQR-Tcu";
 
-const sb = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+let sb = null;
+try {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    sb = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+  }
+} catch (e) {
+  sb = null;
+}
 
 
 let touchStartX = 0;
@@ -486,12 +585,16 @@ const maps = {
   fortress: "fortress-map.png",
   village: "burnedvillage-map.png",
   rainforest: "rainforest-map.png",
+  hell: "hell-map.png",
   volcano: "lava-map.png"
 };
 
 const characters = {
   male: "avatar.png",
-  female: "avatar-female.png"
+  female: "avatar-female.png",
+  caseoh: "avatar-caseoh-1.png",
+  caseoh2: "avatar-caseoh-2.png"
+
 };
 
 
@@ -508,13 +611,15 @@ const icons = {
   dragon: "icons/dragon.png",
   mentor: "icons/mentor.png",
   sidequest: "icons/sidequest.png",
+  sidequest_milestone: "icons/sidequest-milestone.png",
   treasure: "icons/treasure.png"
 };
 
 const doneIcons = {
   enemy: "icons/enemy-done.png",
   dragon: "icons/dragon-done.png",
-  regular: "icons/milestone-done.png"
+  regular: "icons/milestone-done.png",
+  sidequest_milestone: "icons/milestone-done.png"
 };
 
 
@@ -526,22 +631,53 @@ const milestoneHelp = {
   treasure: "Something nice you wouldn't normally do for yourself",
   reward: "A small reward",
   mentor: "A book, a coach, or a friend",
-  sidequest: "Optional mini journey"
+  sidequest: "Optional mini journey",
+  sidequest_milestone: "A step in the journey"
 };
 
+// Quest management
+function newQuest(name = "New Quest") {
+  return {
+    id: "q_" + Date.now() + Math.random(),
+    name,
+    currentMap: "mountain",
+    character: "male",
+    avatar: { x: 120, y: 120, name: "You", notes: "" },
+    milestones: [],
+    wishlist: []
+  };
+}
 
-let state = JSON.parse(localStorage.getItem("rpgState")) || {
-  currentMap: "mountain",
-  character: "male",
-  avatar: { x: 120, y: 120, name: "You", notes: "" },
-  milestones: [],
-  wishlist: []
+let state = JSON.parse(localStorage.getItem("rpgState"));
+// If there's no saved quests structure, migrate existing single-quest state into quests array
+if (!state || !state.quests) {
+  const oldState = state || {};
+  const initialQuest = newQuest(oldState.name || "Main Quest");
+  // Copy over any existing properties from old state
+  initialQuest.currentMap = oldState.currentMap || initialQuest.currentMap;
+  initialQuest.character = oldState.character || initialQuest.character;
+  initialQuest.avatar = oldState.avatar || initialQuest.avatar;
+  initialQuest.milestones = oldState.milestones || initialQuest.milestones;
+  initialQuest.wishlist = oldState.wishlist || initialQuest.wishlist;
+  state = { quests: [ initialQuest ], activeQuestId: initialQuest.id };
+}
+// Ensure there is an activeQuestId
+if (!state.activeQuestId && state.quests.length) {
+  state.activeQuestId = state.quests[0].id;
+}
 
-};
+function getCurrentQuest() {
+  return state.quests.find(q => q.id === state.activeQuestId);
+}
+
+let currentQuest = getCurrentQuest();
 
 function setMap(key) {
-  state.currentMap = key;
+  currentQuest.currentMap = key;
   map.style.background = `url("${maps[key]}") center / contain no-repeat`;
+  // Keep map select dropdown in sync
+  const selectEl = document.getElementById("mapSelect");
+  if (selectEl) selectEl.value = key;
   save();
 }
 
@@ -557,15 +693,14 @@ const context = document.getElementById("context");
 const contextContent = document.getElementById("contextContent");
 
 function save() {
-  if (!state.wishlist) state.wishlist = [];
   localStorage.setItem("rpgState", JSON.stringify(state));
 }
 
 
-setMap(state.currentMap || "mountain");
+setMap(currentQuest.currentMap || "mountain");
 
-if (state.character && characters[state.character]) {
-  avatar.src = characters[state.character];
+if (currentQuest.character && characters[currentQuest.character]) {
+  avatar.src = characters[currentQuest.character];
 }
 
 
@@ -574,12 +709,12 @@ function getTouch(e) {
 }
 
 function drawAvatar() {
-  avatar.style.left = state.avatar.x + "px";
-  avatar.style.top = state.avatar.y + "px";
+  avatar.style.left = currentQuest.avatar.x + "px";
+  avatar.style.top  = currentQuest.avatar.y + "px";
 }
 
 function setCharacter(key) {
-  state.character = key;
+  currentQuest.character = key;
   avatar.src = characters[key];
   save();
 }
@@ -593,7 +728,7 @@ function createPairedMilestone(type, x, y) {
   const pairedType = autoPairs[type];
   if (!pairedType) return;
 
-  state.milestones.push({
+  currentQuest.milestones.push({
     id: Date.now() + Math.random(),
     title: "",
     type: pairedType,
@@ -607,7 +742,7 @@ function createPairedMilestone(type, x, y) {
 function drawMilestones() {
   document.querySelectorAll(".milestone").forEach(e => e.remove());
 
-  state.milestones.forEach(m => {
+  currentQuest.milestones.forEach(m => {
     const el = document.createElement("div");
     m._el = el;
     el.className = "milestone " + m.type;
@@ -719,7 +854,7 @@ titleEl.onclick = () => {
 
 
   // Wishlist helper for reward milestones
-if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
+  if ((m.type === "reward" || m.type === "treasure") && currentQuest.wishlist?.length) {
   const select = document.createElement("select");
 
   const empty = document.createElement("option");
@@ -727,7 +862,7 @@ if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
   empty.textContent = "Choose reward from wishlist";
   select.appendChild(empty);
 
-  state.wishlist.forEach(item => {
+    currentQuest.wishlist.forEach(item => {
     const opt = document.createElement("option");
     opt.value = item;
     opt.textContent = item;
@@ -755,15 +890,13 @@ if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
     cb.type = "checkbox";
     cb.checked = t.done;
     cb.onchange = () => {
-  t.done = cb.checked;
-
-  if (t.fromWishlist && t.done) {
-    state.wishlist = state.wishlist.filter(w => w !== t.text);
-  }
-
-  save();
-  drawMilestones(); // 👈 THIS WAS MISSING
-};
+      t.done = cb.checked;
+      if (t.fromWishlist && t.done) {
+        currentQuest.wishlist = currentQuest.wishlist.filter(w => w !== t.text);
+      }
+      save();
+      drawMilestones();
+    };
 
 
     const text = document.createElement("span");
@@ -803,7 +936,7 @@ if ((m.type === "reward" || m.type === "treasure") && state.wishlist?.length) {
   delMilestone.className = "danger";
   delMilestone.textContent = "Delete Milestone";
   delMilestone.onclick = () => {
-    state.milestones = state.milestones.filter(x => x !== m);
+    currentQuest.milestones = currentQuest.milestones.filter(x => x !== m);
     save();
     modal.style.display = "none";
     drawMilestones();
@@ -820,14 +953,14 @@ avatar.onclick = e => {
 
   modalContent.innerHTML = `
 
-    <input value="${state.avatar.name}">
-    <textarea placeholder="Notes">${state.avatar.notes}</textarea>
+    <input value="${currentQuest.avatar.name}">
+    <textarea placeholder="Notes">${currentQuest.avatar.notes}</textarea>
   `;
   modalContent.querySelector("input").onchange = e => {
-    state.avatar.name = e.target.value; save();
+    currentQuest.avatar.name = e.target.value; save();
   };
   modalContent.querySelector("textarea").onchange = e => {
-    state.avatar.notes = e.target.value; save();
+    currentQuest.avatar.notes = e.target.value; save();
   };
   modal.style.display = "flex";
 };
@@ -860,7 +993,7 @@ contextContent.querySelector("button").onclick = () => {
     y: e.clientY - 24
   };
 
-  state.milestones.push(m);
+  currentQuest.milestones.push(m);
 
   createPairedMilestone(type, m.x, m.y);
 
@@ -891,7 +1024,7 @@ window.onmousemove = window.ontouchmove = e => {
   dragTarget.x = p.clientX - dragOffset.x;
   dragTarget.y = p.clientY - dragOffset.y;
 
-  if (dragTarget === state.avatar) {
+  if (dragTarget === currentQuest.avatar) {
     drawAvatar();
   } else {
     dragTarget._el.style.left = dragTarget.x + "px";
@@ -903,7 +1036,7 @@ window.ontouchend = () => {
   if (!dragTarget) return;
 
   if (!touchMoved) {
-  if (dragTarget === state.avatar) {
+  if (dragTarget === currentQuest.avatar) {
    // openAvatar();
   } else {
     openMilestone(dragTarget);
@@ -928,9 +1061,9 @@ avatar.onmousedown = e => {
   if (!e.altKey) return;
 
   isDraggingAvatar = true;
-  dragTarget = state.avatar;
-  dragOffset.x = e.clientX - state.avatar.x;
-  dragOffset.y = e.clientY - state.avatar.y;
+  dragTarget = currentQuest.avatar;
+  dragOffset.x = e.clientX - currentQuest.avatar.x;
+  dragOffset.y = e.clientY - currentQuest.avatar.y;
   e.preventDefault();
 };
 
@@ -942,9 +1075,9 @@ avatar.ontouchstart = e => {
   touchStartX = t.clientX;
   touchStartY = t.clientY;
 
-  dragTarget = state.avatar;
-  dragOffset.x = t.clientX - state.avatar.x;
-  dragOffset.y = t.clientY - state.avatar.y;
+  dragTarget = currentQuest.avatar;
+  dragOffset.x = t.clientX - currentQuest.avatar.x;
+  dragOffset.y = t.clientY - currentQuest.avatar.y;
 
   e.preventDefault();
 };
@@ -957,16 +1090,16 @@ avatar.ontouchend = e => {
 
   modalContent.innerHTML = `
 
-    <input value="${state.avatar.name}">
-    <textarea placeholder="Notes">${state.avatar.notes}</textarea>
+    <input value="${currentQuest.avatar.name}">
+    <textarea placeholder="Notes">${currentQuest.avatar.notes}</textarea>
   `;
 
   modalContent.querySelector("input").onchange = e => {
-    state.avatar.name = e.target.value; save();
+    currentQuest.avatar.name = e.target.value; save();
   };
 
   modalContent.querySelector("textarea").onchange = e => {
-    state.avatar.notes = e.target.value; save();
+    currentQuest.avatar.notes = e.target.value; save();
   };
 
   modal.style.display = "flex";
@@ -1036,7 +1169,7 @@ if (action === "character") {
             width:64px;
             height:64px;
             cursor:pointer;
-            border:${state.character === k ? '2px solid #fff' : '2px solid transparent'};
+            border:${currentQuest.character === k ? '2px solid #fff' : '2px solid transparent'};
             border-radius:6px;
           "
           onclick="setCharacter('${k}'); modal.style.display='none'"
@@ -1060,7 +1193,12 @@ if (action === "character") {
 }
 
 if (action === "campfire") {
-  modalContent.innerHTML = `
+  // If Supabase is not available (offline), show a message instead of loading campfire
+  if (!sb) {
+    modalContent.innerHTML = `<p style="text-align:center;">Campfire is unavailable offline.</p>`;
+    modal.style.display = "flex";
+  } else {
+    modalContent.innerHTML = `
   <h3 style="text-align:center;">Join the Campfire</h3>
 
   <div id="campfireMessages">Loading…</div>
@@ -1073,25 +1211,23 @@ if (action === "campfire") {
 
   <button id="cfSend">Leave Message</button>
 `;
-modal.style.display = "flex";
+    modal.style.display = "flex";
 
-
-  const loadMessages = () => {
-    sb
-      .from("messages")
-      .select("username, message, created_at")
-      .order("created_at", { ascending: true })
-      .limit(20)
-      .then(res => {
-        const box = document.getElementById("campfireMessages");
-        if (!res.data || res.data.length === 0) {
-          box.innerHTML = "<p>No messages yet.</p>";
-          return;
-        }
-        box.innerHTML = res.data.map(m => {
-  const displayName = (m.username && m.username.trim()) || "someone";
-
-  return `
+    const loadMessages = () => {
+      sb
+        .from("messages")
+        .select("username, message, created_at")
+        .order("created_at", { ascending: true })
+        .limit(20)
+        .then(res => {
+          const box = document.getElementById("campfireMessages");
+          if (!res.data || res.data.length === 0) {
+            box.innerHTML = "<p>No messages yet.</p>";
+            return;
+          }
+          box.innerHTML = res.data.map(m => {
+            const displayName = (m.username && m.username.trim()) || "someone";
+            return `
     <p class="cf-msg">
       <span class="cf-name" style="color:${nameColor(displayName)}">
         ${displayName}
@@ -1099,31 +1235,27 @@ modal.style.display = "flex";
       <span class="cf-text">${m.message}</span>
     </p>
   `;
-}).join("");
+          }).join("");
+          box.scrollTop = box.scrollHeight;
+        });
+    };
 
-box.scrollTop = box.scrollHeight;
+    loadMessages();
+    window._campfirePoll = setInterval(loadMessages, 15000);
 
+    document.getElementById("cfSend").onclick = () => {
+      const name = document.getElementById("cfName").value || "anon";
+      const msg = document.getElementById("cfMsg").value.trim();
+      if (!msg) return;
+      sb.from("messages").insert({
+        username: name,
+        message: msg
+      }).then(() => {
+        document.getElementById("cfMsg").value = "";
+        loadMessages();
       });
-  };
-
-  loadMessages();
-  
-  window._campfirePoll = setInterval(loadMessages, 15000);
-
-
-  document.getElementById("cfSend").onclick = () => {
-    const name = document.getElementById("cfName").value || "anon";
-    const msg = document.getElementById("cfMsg").value.trim();
-    if (!msg) return;
-
-    sb.from("messages").insert({
-      username: name,
-      message: msg
-    }).then(() => {
-      document.getElementById("cfMsg").value = "";
-      loadMessages();
-    });
-  };
+    };
+  }
 }
 
 
@@ -1133,11 +1265,11 @@ function renderWishlist() {
   const box = document.getElementById("wishlistItems");
   if (!box) return;
 
-  if (!state.wishlist) state.wishlist = [];
+  if (!currentQuest.wishlist) currentQuest.wishlist = [];
 
   box.innerHTML = "";
 
-  state.wishlist.forEach((item, i) => {
+  currentQuest.wishlist.forEach((item, i) => {
     const row = document.createElement("div");
     row.className = "task";
 
@@ -1148,7 +1280,7 @@ function renderWishlist() {
     const del = document.createElement("button");
     del.textContent = "🗑";
     del.onclick = () => {
-      state.wishlist.splice(i, 1);
+      currentQuest.wishlist.splice(i, 1);
       save();
       renderWishlist();
     };
@@ -1162,7 +1294,7 @@ function renderWishlist() {
 
   input.onkeydown = e => {
     if (e.key === "Enter" && input.value.trim()) {
-      state.wishlist.push(input.value.trim());
+      currentQuest.wishlist.push(input.value.trim());
       input.value = "";
       save();
       renderWishlist();
@@ -1175,19 +1307,99 @@ drawAvatar();
 drawMilestones();
 
 const mapSelect = document.getElementById("mapSelect");
-mapSelect.value = state.currentMap;
-mapSelect.onchange = e => setMap(e.target.value);
+// Some views may not have a map selector. Guard against null.
+if (mapSelect) {
+  mapSelect.value = currentQuest.currentMap;
+  mapSelect.onchange = e => setMap(e.target.value);
+}
 
 // --- SUPABASE READ TEST ---
-sb
-  .from("messages")
-  .select("username, message, created_at")
-  .order("created_at", { ascending: false })
-  .limit(5)
-  .then(res => {
-    console.log("Campfire messages:", res);
-  });
+// Only run the test query if Supabase is available. Without this guard,
+// calling methods on a null sb will throw and break the rest of the script.
+if (sb) {
+  sb
+    .from("messages")
+    .select("username, message, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5)
+    .then(res => {
+      console.log("Campfire messages:", res);
+    });
+}
 
+// Quest sidebar logic
+const questSidebar = document.getElementById("questSidebar");
+const questListEl = document.getElementById("questList");
+const addQuestButton = document.getElementById("addQuestButton");
+
+function toggleQuestSidebar() {
+  questSidebar.classList.toggle("open");
+}
+
+function renderQuests() {
+  questListEl.innerHTML = "";
+  state.quests.forEach(q => {
+    const item = document.createElement("div");
+    item.className = "quest-item" + (q.id === state.activeQuestId ? " active" : "");
+    // name input for editing quest name
+    const input = document.createElement("input");
+    input.value = q.name;
+    input.onchange = () => {
+      q.name = input.value.trim() || "Untitled Quest";
+      save();
+      renderQuests();
+    };
+    input.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      }
+    };
+    item.appendChild(input);
+    item.onclick = (e) => {
+      // ignore click when editing
+      if (e.target === input) return;
+      if (state.activeQuestId !== q.id) {
+        state.activeQuestId = q.id;
+        currentQuest = getCurrentQuest();
+        setMap(currentQuest.currentMap || "mountain");
+        if (currentQuest.character && characters[currentQuest.character]) {
+          avatar.src = characters[currentQuest.character];
+        }
+        drawAvatar();
+        drawMilestones();
+        renderWishlist();
+        renderQuests();
+      }
+      questSidebar.classList.remove("open");
+    };
+    questListEl.appendChild(item);
+  });
+}
+
+addQuestButton.onclick = () => {
+  const q = newQuest("New Quest");
+  state.quests.push(q);
+  state.activeQuestId = q.id;
+  currentQuest = q;
+  save();
+  setMap(currentQuest.currentMap || "mountain");
+  if (currentQuest.character && characters[currentQuest.character]) {
+    avatar.src = characters[currentQuest.character];
+  }
+  drawAvatar();
+  drawMilestones();
+  renderWishlist();
+  renderQuests();
+};
+
+// Add toggle to quests button
+document.querySelector('[data-action="quests"]').onclick = () => {
+  toggleQuestSidebar();
+};
+
+// Initial quest render
+renderQuests();
 
 </script>
 
