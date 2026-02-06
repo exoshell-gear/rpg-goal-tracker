@@ -1,1407 +1,483 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>Veronium | RPG Goal Tracker</title>
-
-<link rel="icon" type="image/png" href="favicon.png">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Veronium — Turn Your Life Into a Game</title>
+<link rel="icon" href="favicon.png" />
 
 <style>
-
-/* Campfire modal */
-#campfire {
-  background: radial-gradient(
-    circle at top center,
-    #2a1a12 0%,
-    #120a06 60%,
-    #050303 100%
-  );
-  box-shadow:
-    0 0 40px rgba(255,120,40,.15),
-    inset 0 0 60px rgba(0,0,0,.8);
-  border-radius: 12px;
+:root {
+  --green: #2dff77;
+  --green-dark: #1fd866;
+  --bg: #0b0f0c;
+  --stroke: rgba(255,255,255,0.06);
+  --text: #e7f4ec;
+  --muted: #a3bfb0;
 }
 
-.cf-msg {
-  margin: 10px 0;
-  line-height: 1.5;
-  font-size: 14px;
-  color: #ddd;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(
+      900px 600px at top left,
+      rgba(45,255,119,.14),
+      rgba(45,255,119,.05) 45%,
+      transparent 70%
+    ),
+    var(--bg);
 }
 
-.cf-name {
-  color: #ffb36b;
-  font-weight: 600;
-  margin-right: 6px;
+/* LAYOUT */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
 }
 
-.cf-text {
-  color: #e6e6e6;
-}
-
-#cfName, #cfMsg {
-  background: rgba(0,0,0,.4);
-  border: 1px solid rgba(255,140,60,.15);
-  border-radius: 6px;
-}
-
-#cfName {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-
-#cfMsg {
-  min-height: 44px;
-  max-height: 88px;
-  resize: none;
-}
-
-#campfireMessages {
-  max-height: 220px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-}
-
-.cf-divider {
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  margin: 10px 0;
-}
-
-
-.panel {
-  background: radial-gradient(circle at top, #181818, #0e0e0e);
-  box-shadow: 0 20px 60px rgba(0,0,0,.6);
-}
-
-.task {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 28px;
-  align-items: start;
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  padding: 8px 0;
+  margin-bottom: 20px;
 }
 
-.task span {
-  font-size: 14px;
-  text-align: left;
-  width: 100%;
-  line-height: 1.4;
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: anywhere;
-  cursor: pointer;
+header img {
+  width: 34px;
+  height: 34px;
 }
 
-.task button {
-  align-self: start;
-  margin-top: 2px;
-}
-
-.task input[type="checkbox"] {
-  transform: scale(1.1);
-}
-
-.task button {
-  background: none;
-  border: none;
-  color: #555;
-  cursor: pointer;
-}
-
-.task button:hover {
-  color: #ff5555;
-}
-
-.task input:checked + span {
-  opacity: 0.5;
-  text-decoration: line-through;
-}
-
-.panel h3 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  letter-spacing: 0.05em;
-  font-size: 13px;
-  text-transform: uppercase;
-  color: #aaa;
-}
-
-
-  body {
-    margin: 0;
-    background: black;
-    overflow: hidden;
-    font-family: sans-serif;
-  }
-
-  #map {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-
-
-  #avatar {
-    position: absolute;
-    width: 96px;
-    height: 96px;
-    user-select: none;
-    cursor: pointer;
-  }
-
-  .milestone {
-    position: absolute;
-    user-select: none;
-    cursor: pointer;
-  }
-
-  .milestone img {
-    width: 96px;
-    height: 96px;
-    pointer-events: none;
-
-    /* readability shadow */
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.85));
-  }
-  
-  .milestone.dragon img {
-  width: 256px;
-  height: 256px;
-}
-
-
-  #modal, #context {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .panel {
-  background: linear-gradient(#181818, #0f0f0f);
-  color: white;
-  padding: 20px;
-  width: 520px;
-  max-width: 90vw;
-  border-radius: 8px;
-}
-
-  input, textarea, select {
-    width: 100%;
-    margin-bottom: 8px;
-    background: #222;
-    color: white;
-    border: none;
-    padding: 6px;
-  }
-
-#modal button,
-#context button {
-  width: 100%;
-  margin-top: 8px;
-}
-  
-  button.danger {
-  width: auto;
-  padding: 6px 12px;
-  margin-top: 12px;
-  background: #1a1a1a;
-  color: #ff6666;
-  border: 1px solid #333;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-button.danger:hover {
-  background: #220;
-  border-color: #ff6666;
-}
-
-button.steel {
-  width: 100%;
-  padding: 8px 12px;
-  margin-top: 8px;
-  background: #1a1a1a;
-  color: #ddd;
-  border: 1px solid #333;
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-button.steel:hover {
-  background: #222;
-  border-color: #555;
-}
-
-
-
-#dock {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 30;
-}
-
-
-#dock button {
-  width: 44px;
-  height: 44px;
-  background: rgba(20,20,20,0.85);
-  border: 1px solid #ffffff;
-  border-radius: 10px;
-  color: #fff;
+header span {
   font-size: 18px;
-  cursor: pointer;
-  display: flex;
+  font-weight: 600;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(180deg, #141b17, #0c110e);
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  padding: 44px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 36px;
+  align-items: center;
+  margin-bottom: 36px;
+  box-shadow: 0 30px 90px rgba(0,0,0,.6);
+}
+
+.hero h1 {
+  font-size: 64px;
+  line-height: 1.02;
+  margin: 0 0 14px;
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+.hero img.board {
+  width: 100%;
+  border-radius: 16px;
+  background: #050805;
+  padding: 8px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    0 18px 48px rgba(0,0,0,.55);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.split img {
+  width: 100%;
+  border-radius: 16px;
+  background: #050805;
+  padding: 8px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    0 18px 48px rgba(0,0,0,.55);
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .split {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .split img {
+    order: 2;
+    margin-top: 20px;
+  }
+
+  .split > div {
+    order: 1;
+  }
+}
+
+
+
+/* BUTTON */
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  background: var(--green);
+  color: #052b14;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 10px;
+
+  text-decoration: none; /* IMPORTANT */
+  cursor: pointer;
+
+  box-shadow: 0 12px 34px rgba(45,255,119,.35);
+  transition: transform .15s ease, background .15s ease;
 }
 
-#dock button:hover {
-  background: #222;
-}
-
-#dock button:active {
-  transform: translateY(1px);
-}
-
-/* Ensure task delete buttons never become full-width */
-.task button {
-  width: auto !important;
-  margin-top: 0 !important;
-  background: none;
-}
-
-/* Wishlist uses task UI but without checkbox column */
-#wishlistItems .task {
-  grid-template-columns: minmax(0, 1fr) 28px;
-}
-
-/* Gemstone dock icon*/
-.dock-icon {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  display: block;
-  margin: auto;
-  pointer-events: none;
-}
-
-/* ===== MOBILE GATE (phones only) ===== */
-#mobileGate{
-  display:none;               /* default hidden = no flicker */
-  position:fixed;
-  inset:0;
-  background:#000;
-  color:#fff;
-  z-index:999999;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:24px;
-}
-
-#mobileGate > div{
-  max-width:320px;
-}
-
-#mobileGate .mobile-gate-title,
-#mobileGate h2{
-  font-size:22px;
-  font-weight:700;
-  margin:0 0 12px;
-}
-
-#mobileGate .mobile-gate-sub,
-#mobileGate p{
-  font-size:14px;
-  opacity:.8;
-  margin:0;
-}
-
-/* phones only (and touch screens) */
-@media (max-width: 600px) and (pointer: coarse){
-  #mobileGate{ display:flex; }
-  body > :not(#mobileGate){ display:none !important; } /* hide the app underneath */
+.btn:hover {
+  background: var(--green-dark);
+  transform: translateY(-1px);
 }
 
 
-/* Animate dragon — BRIGHTER, HOTTER */
-.milestone.dragon img {
-  animation: bossGlow 8s ease-in-out infinite;
+/* SECTIONS */
+.section-panel {
+  background: linear-gradient(180deg, #141b17, #0c110e);
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  padding: 36px;
+  margin-bottom: 28px;
+  box-shadow: 0 22px 60px rgba(0,0,0,.55);
 }
 
-@keyframes bossGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(220,60,60,.25));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 10px rgba(220,60,60,.45))
-      drop-shadow(0 0 18px rgba(180,40,40,.55));
-  }
+.section-panel h2 {
+  font-size: 40px;
+  margin: 0 0 10px;
+}
+
+.section-panel p {
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+/* FEATURES */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.feature {
+  background: linear-gradient(180deg, #101613, #0c110e);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.45);
+}
+
+.feature h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: var(--green);
+}
+
+.feature img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: #050805;
+  padding: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.06),
+    0 10px 28px rgba(0,0,0,.45);
+}
+
+.feature p {
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+.feature {
+  border: 1px solid rgba(45,255,119,.18);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+
+.feature:hover {
+  box-shadow:
+    0 0 0 1px rgba(45,255,119,.35),
+    0 20px 50px rgba(0,0,0,.6);
+  transform: translateY(-2px);
 }
 
 
-
-/* Animate rewards */
-.milestone.reward img {
-  animation: rewardGlow 5s ease-in-out infinite;
-}
-
-@keyframes rewardGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(80,255,140,.3));
-  }
-  50% {
-    filter:
-      drop-shadow(0 0 10px rgba(80,255,140,.6))
-      drop-shadow(0 0 22px rgba(80,255,140,.85));
-  }
-}
-
-
-/* Animate Treasure */
-.milestone.treasure img {
-  animation: treasureGlow 6s ease-in-out infinite;
-}
-
-@keyframes treasureGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 0 rgba(255,200,80,0));
-  }
-  50% {
-    filter: drop-shadow(0 0 16px rgba(255,200,80,.8));
-  }
-}
-
-.milestone.completed img {
-  animation: none !important;
-  /* filter: none !important; */
-
-/* readability shadow */
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.65));
-
-}
-/* Quest sidebar styles */
-#questSidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100%;
-  /* Match the dark, gradient styling of the instructions page */
-  background: linear-gradient(#1b1b1b, #0f0f0f);
-  /* subtle inner border and stronger outer shadow like the tome container */
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 4px 0 12px rgba(0,0,0,0.6);
-  border-right: 1px solid rgba(255,255,255,0.05);
-  border-radius: 0 6px 6px 0;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 40;
-}
-
-#questSidebar.open {
-  transform: translateX(0);
-}
-
-#questSidebar h3 {
-  margin: 16px;
-  font-size: 15px;
+/* LTD */
+.ltd {
+  background:
+    radial-gradient(
+      520px 220px at top center,
+      rgba(45,255,119,.18),
+      transparent 65%
+    ),
+    linear-gradient(180deg, #141b17, #0c110e);
+  border: 1px solid rgba(45,255,119,.25);
+  border-radius: 22px;
+  padding: 32px 44px;
+  margin-top: 20px;
+  box-shadow: 0 36px 110px rgba(0,0,0,.65);
   text-align: center;
-  color: #ffb36b;
-  /* match instructions headings */
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
-#questList {
-  flex: 1;
-  overflow-y: auto;
+.ltd {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.quest-item {
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  /* lighter divider to match tone */
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+
+.ltd h2 {
+  margin: 0 0 10px;
+  font-size: 42px;
 }
 
-.quest-item.active {
-  background: rgba(255,255,255,0.08);
+.ltd p {
+  font-size: 16px;
 }
 
-  .quest-item input {
-  /* limit the rename area so clicking outside can select the quest */
-  /* shrink further so there is more clickable area to select the quest */
-  /* further reduce rename area to make selecting easier */
-  width: 50%;
-  flex: none;
-  border: none;
+.ltd ul {
+  margin: 18px auto 28px;
+  padding-left: 18px;
+  color: var(--muted);
+  display: inline-block;
+  text-align: left;
+}
+
+.ltd li {
+  margin-bottom: 8px;
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  color: #6f8f7e;
+  font-size: 12.5px;
+  margin-top: 32px;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 32px 24px;
+  }
+
+  .hero h1 {
+    font-size: 44px;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .section-panel,
+  .ltd {
+    padding: 28px 24px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+.btn.secondary {
   background: transparent;
-  color: #ddd;
-  font-size: 14px;
+  color: var(--green);
+  border: 1px solid rgba(45,255,119,.35);
+  box-shadow: none;
 }
 
-.quest-item input:focus {
-  outline: 1px solid #444;
-}
 
-#addQuestButton {
-  /* reposition near heading; stylize to stand out */
-  margin: 0 16px 12px 16px;
-  padding: 10px 14px;
-  background: linear-gradient(#25465a, #18334a);
-  color: #9bdcff;
-  border: 1px solid #0d2538;
-  border-radius: 4px;
-  width: auto;
-  cursor: pointer;
 }
-
-#addQuestButton:hover {
-  background: linear-gradient(#2e5a75, #204a63);
-}
-
 </style>
 </head>
 
 <body>
-
-<div id="mobileGate">
-  <div class="mobile-gate-content">
-    <p><div><img src="icons/reward-dock.png" class="dock-icon"></div></p>
-    <div class="mobile-gate-title">Try Veronium on desktop.</div>
-    <div class="mobile-gate-sub">Just trust me on this.</div>
-  </div>
-</div>
-
-
-<div id="map">
-  <img id="avatar" src="avatar.png">
-</div>
-
-<div id="modal"><div class="panel" id="modalContent"></div></div>
-<div id="context"><div class="panel" id="contextContent"></div></div>
-
-<!-- Quest Sidebar -->
-<div id="questSidebar">
-  <h3>Quests</h3>
-  <!-- Move the New Quest button below the heading so it's easy to find -->
-  <button id="addQuestButton">New Quest</button>
-  <div id="questList"></div>
-</div>
-
-<div id="dock">
-  <button data-action="menu">❔</button>
-  <button data-action="map">🌍</button>
-  <button data-action="character">🙂</button>
-<button data-action="wishlist">
-  <img src="icons/reward-dock.png" class="dock-icon">
-</button>
-  <button data-action="campfire">🔥</button>
-  <button data-action="quests">📜</button>
-</div>
-
-
-<script>
-
-
-function nameColor(name = "") {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  const hue = Math.abs(hash) % 360;
-
-  return `hsl(${hue}, 55%, 65%)`;
-}
-
-
-
-// SUPABASE CLIENT (ONE TIME)
-const SUPABASE_URL = "https://augbhhspjpmlrirurxxt.supabase.co";
-const SUPABASE_KEY = "sb_publishable_EE8xYsgubn80NnstXUVhxA__NQR-Tcu";
-
-let sb = null;
-try {
-  if (window.supabase && typeof window.supabase.createClient === 'function') {
-    sb = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-  }
-} catch (e) {
-  sb = null;
-}
-
-
-let touchStartX = 0;
-let touchStartY = 0;
-
-let touchMoved = false;
-
-let touchId = null;
-
-let isDraggingAvatar = false;
-
-function isModalOpen() {
-  return modal.style.display === "flex" || context.style.display === "flex";
-}
-
-function killDrag() {
-  dragTarget = null;
-  touchMoved = false;
-  isDraggingAvatar = false;
-}
-
-
-const maps = {
-  mountain: "mountain-map.png",
-  temple: "temple-map.png",
-  city: "oldcity-map.png",
-  causeway: "causeway-map.png",
-  fortress: "fortress-map.png",
-  village: "burnedvillage-map.png",
-  rainforest: "rainforest-map.png",
-  hell: "hell-map.png",
-  volcano: "lava-map.png"
-};
-
-const characters = {
-  male: "avatar.png",
-  female: "avatar-female.png",
-  caseoh: "avatar-caseoh-1.png",
-  caseoh2: "avatar-caseoh-2.png"
-
-};
-
-
-const autoPairs = {
-  enemy: "reward",
-  dragon: "treasure"
-};
-
-const icons = {
-  regular: "icons/milestone.png",
-  start: "icons/start.png",
-  enemy: "icons/enemy.png",
-  reward: "icons/reward.png",
-  dragon: "icons/dragon.png",
-  mentor: "icons/mentor.png",
-  sidequest: "icons/sidequest.png",
-  sidequest_milestone: "icons/sidequest-milestone.png",
-  treasure: "icons/treasure.png"
-};
-
-const doneIcons = {
-  enemy: "icons/enemy-done.png",
-  dragon: "icons/dragon-done.png",
-  regular: "icons/milestone-done.png",
-  sidequest_milestone: "icons/milestone-done.png"
-};
-
-
-const milestoneHelp = {
-  regular: "A step in the journey",
-  start: "The journey begins",
-  enemy: "Something you are avoiding",
-  dragon: "The big end goal",
-  treasure: "Something nice you wouldn't normally do for yourself",
-  reward: "A small reward",
-  mentor: "A book, a coach, or a friend",
-  sidequest: "Optional mini journey",
-  sidequest_milestone: "A step in the journey"
-};
-
-// Quest management
-function newQuest(name = "New Quest") {
-  return {
-    id: "q_" + Date.now() + Math.random(),
-    name,
-    currentMap: "mountain",
-    character: "male",
-    avatar: { x: 120, y: 120, name: "You", notes: "" },
-    milestones: [],
-    wishlist: []
-  };
-}
-
-let state = JSON.parse(localStorage.getItem("rpgState"));
-// If there's no saved quests structure, migrate existing single-quest state into quests array
-if (!state || !state.quests) {
-  const oldState = state || {};
-  const initialQuest = newQuest(oldState.name || "Main Quest");
-  // Copy over any existing properties from old state
-  initialQuest.currentMap = oldState.currentMap || initialQuest.currentMap;
-  initialQuest.character = oldState.character || initialQuest.character;
-  initialQuest.avatar = oldState.avatar || initialQuest.avatar;
-  initialQuest.milestones = oldState.milestones || initialQuest.milestones;
-  initialQuest.wishlist = oldState.wishlist || initialQuest.wishlist;
-  state = { quests: [ initialQuest ], activeQuestId: initialQuest.id };
-}
-// Ensure there is an activeQuestId
-if (!state.activeQuestId && state.quests.length) {
-  state.activeQuestId = state.quests[0].id;
-}
-
-function getCurrentQuest() {
-  return state.quests.find(q => q.id === state.activeQuestId);
-}
-
-let currentQuest = getCurrentQuest();
-
-function setMap(key) {
-  currentQuest.currentMap = key;
-  map.style.background = `url("${maps[key]}") center / contain no-repeat`;
-  // Keep map select dropdown in sync
-  const selectEl = document.getElementById("mapSelect");
-  if (selectEl) selectEl.value = key;
-  save();
-}
-
-
-let dragTarget = null;
-let dragOffset = { x: 0, y: 0 };
-
-const map = document.getElementById("map");
-const avatar = document.getElementById("avatar");
-const modal = document.getElementById("modal");
-const modalContent = document.getElementById("modalContent");
-const context = document.getElementById("context");
-const contextContent = document.getElementById("contextContent");
-
-function save() {
-  localStorage.setItem("rpgState", JSON.stringify(state));
-}
-
-
-setMap(currentQuest.currentMap || "mountain");
-
-if (currentQuest.character && characters[currentQuest.character]) {
-  avatar.src = characters[currentQuest.character];
-}
-
-
-function getTouch(e) {
-  return e.touches[0] || e.changedTouches[0];
-}
-
-function drawAvatar() {
-  avatar.style.left = currentQuest.avatar.x + "px";
-  avatar.style.top  = currentQuest.avatar.y + "px";
-}
-
-function setCharacter(key) {
-  currentQuest.character = key;
-  avatar.src = characters[key];
-  save();
-}
-
-function isMilestoneComplete(m) {
-  if (!m.tasks || m.tasks.length === 0) return false;
-  return m.tasks.every(t => t.done);
-}
-
-function createPairedMilestone(type, x, y) {
-  const pairedType = autoPairs[type];
-  if (!pairedType) return;
-
-  currentQuest.milestones.push({
-    id: Date.now() + Math.random(),
-    title: "",
-    type: pairedType,
-    tasks: [],
-    x: x + 80,
-    y: y
-  });
-}
-
-
-function drawMilestones() {
-  document.querySelectorAll(".milestone").forEach(e => e.remove());
-
-  currentQuest.milestones.forEach(m => {
-    const el = document.createElement("div");
-    m._el = el;
-    el.className = "milestone " + m.type;
-    el.style.left = m.x + "px";
-    el.style.top = m.y + "px";
-
-    const img = document.createElement("img");
-    const completed = isMilestoneComplete(m);
-
-if (completed && doneIcons[m.type]) {
-  img.src = doneIcons[m.type];
-  el.classList.add("completed");
-} else {
-  img.src = icons[m.type];
-}
-
-    el.appendChild(img);
-
-    el.onclick = e => {
-      if (!e.altKey) openMilestone(m);
-    };
-
-    el.onmousedown = e => {
-      if (!e.altKey) return;
-      dragTarget = m;
-      dragOffset.x = e.clientX - m.x;
-      dragOffset.y = e.clientY - m.y;
-      e.preventDefault();
-    };
-
-    
-el.ontouchstart = e => {
-  if (isModalOpen()) return;
-  if (e.touches.length !== 1) return;
-
-  const t = e.touches[0];
-  touchMoved = false;
-  touchStartX = t.clientX;
-  touchStartY = t.clientY;
-
-  dragTarget = m;
-  dragOffset.x = t.clientX - m.x;
-  dragOffset.y = t.clientY - m.y;
-
-  e.preventDefault();
-};
-
-
-
-el.ontouchmove = e => {
-  if (!dragTarget) return;
-
-  const t = e.touches[0];
-
-  const dx = Math.abs(t.clientX - touchStartX);
-  const dy = Math.abs(t.clientY - touchStartY);
-
-  if (dx > 6 || dy > 6) {
-    touchMoved = true;
-  }
-
-  if (!touchMoved) return;
-
-  dragTarget.x = t.clientX - dragOffset.x;
-  dragTarget.y = t.clientY - dragOffset.y;
-
-  dragTarget._el.style.left = dragTarget.x + "px";
-  dragTarget._el.style.top = dragTarget.y + "px";
-};
-
-    map.appendChild(el);
-  });
-}
-
-function openMilestone(m) {
-  killDrag();
-
-  modalContent.innerHTML = `
-  <h3 id="milestoneTitle" style="cursor:pointer;">
-    ${m.title || milestoneHelp[m.type] || "Untitled"}
-  </h3>
-`;
-
-const titleEl = document.getElementById("milestoneTitle");
-
-titleEl.onclick = () => {
-  const input = document.createElement("input");
-  input.value = m.title || "";
-  input.style.fontSize = "16px";
-  input.style.width = "100%";
-
-  titleEl.replaceWith(input);
-  input.focus();
-  input.select();
-
-  const saveTitle = () => {
-    m.title = input.value.trim();
-    save();
-    openMilestone(m);
-  };
-
-  input.onkeydown = e => {
-    if (e.key === "Enter") saveTitle();
-    if (e.key === "Escape") openMilestone(m);
-  };
-
-  input.onblur = saveTitle;
-};
-
-
-  // Wishlist helper for reward milestones
-  if ((m.type === "reward" || m.type === "treasure") && currentQuest.wishlist?.length) {
-  const select = document.createElement("select");
-
-  const empty = document.createElement("option");
-  empty.value = "";
-  empty.textContent = "Choose reward from wishlist";
-  select.appendChild(empty);
-
-    currentQuest.wishlist.forEach(item => {
-    const opt = document.createElement("option");
-    opt.value = item;
-    opt.textContent = item;
-    select.appendChild(opt);
-  });
-
-  select.onchange = () => {
-    if (!select.value) return;
-
-    m.tasks.push({ text: select.value, done: false, fromWishlist: true });
-    save();
-    openMilestone(m);
-  };
-
-  modalContent.appendChild(select);
-}
-
-
-
-  m.tasks.forEach((t, i) => {
-    const row = document.createElement("div");
-    row.className = "task";
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = t.done;
-    cb.onchange = () => {
-      t.done = cb.checked;
-      if (t.fromWishlist && t.done) {
-        currentQuest.wishlist = currentQuest.wishlist.filter(w => w !== t.text);
-      }
-      save();
-      drawMilestones();
-    };
-
-
-    const text = document.createElement("span");
-    text.textContent = t.text;
-    text.onclick = () => {
-      const val = prompt("Edit task", t.text);
-      if (val !== null) { t.text = val; save(); openMilestone(m); }
-    };
-
-    const del = document.createElement("button");
-    del.textContent = "🗑";
-    del.onclick = () => {
-      m.tasks.splice(i,1);
-      save();
-      openMilestone(m);
-    };
-
-    row.append(cb, text, del);
-    modalContent.appendChild(row);
-  });
-
-  const add = document.createElement("input");
-  add.placeholder =
-  (m.type === "reward" || m.type === "treasure")
-    ? "Add reward → Enter"
-    : "New task → Enter";
-  add.onkeydown = e => {
-    if (e.key === "Enter" && add.value.trim()) {
-      m.tasks.push({ text: add.value, done: false });
-      save();
-      openMilestone(m);
-    }
-  };
-  modalContent.appendChild(add);
-
-  const delMilestone = document.createElement("button");
-  delMilestone.className = "danger";
-  delMilestone.textContent = "Delete Milestone";
-  delMilestone.onclick = () => {
-    currentQuest.milestones = currentQuest.milestones.filter(x => x !== m);
-    save();
-    modal.style.display = "none";
-    drawMilestones();
-  };
-
-  delMilestone.style.alignSelf = "flex-end";
-  modalContent.appendChild(delMilestone);
-  modal.style.display = "flex";
-}
-
-avatar.onclick = e => {
-  if (isDraggingAvatar || e.altKey) return;
-  killDrag();
-
-  modalContent.innerHTML = `
-
-    <input value="${currentQuest.avatar.name}">
-    <textarea placeholder="Notes">${currentQuest.avatar.notes}</textarea>
-  `;
-  modalContent.querySelector("input").onchange = e => {
-    currentQuest.avatar.name = e.target.value; save();
-  };
-  modalContent.querySelector("textarea").onchange = e => {
-    currentQuest.avatar.notes = e.target.value; save();
-  };
-  modal.style.display = "flex";
-};
-
-
-map.oncontextmenu = e => {
-  e.preventDefault();
-  contextContent.innerHTML = `
-  <h3 style="text-align:center;">NEW MILESTONE</h3>
-
-  <select id="type">
-    ${Object.keys(icons).map(k => `<option value="${k}">${k}</option>`).join("")}
-  </select>
-
-  <button>Create</button>
-`;
-
-  context.style.display = "flex";
-  
-
-contextContent.querySelector("button").onclick = () => {
-  const type = document.getElementById("type").value;
-
-  const m = {
-    id: Date.now(),
-    title: "",
-    type,
-    tasks: [],
-    x: e.clientX - 24,
-    y: e.clientY - 24
-  };
-
-  currentQuest.milestones.push(m);
-
-  createPairedMilestone(type, m.x, m.y);
-
-  save();
-  context.style.display = "none";
-
-  drawMilestones();
-  openMilestone(m); // 👈 THIS IS THE KEY
-};
-
-};
-
-window.onmousemove = window.ontouchmove = e => {
-  if (isModalOpen()) return;
-  if (!dragTarget) return;
-
-  const p = e.touches ? getTouch(e) : e;
-
-  // 👇 THIS IS THE MISSING PIECE
-  if (e.touches) {
-    const dx = Math.abs(p.clientX - touchStartX);
-    const dy = Math.abs(p.clientY - touchStartY);
-    if (dx > 6 || dy > 6) {
-      touchMoved = true;
-    }
-  }
-
-  dragTarget.x = p.clientX - dragOffset.x;
-  dragTarget.y = p.clientY - dragOffset.y;
-
-  if (dragTarget === currentQuest.avatar) {
-    drawAvatar();
-  } else {
-    dragTarget._el.style.left = dragTarget.x + "px";
-    dragTarget._el.style.top = dragTarget.y + "px";
-  }
-};
-
-window.ontouchend = () => {
-  if (!dragTarget) return;
-
-  if (!touchMoved) {
-  if (dragTarget === currentQuest.avatar) {
-   // openAvatar();
-  } else {
-    openMilestone(dragTarget);
-  }
-}
-
-
-  save();
-  dragTarget = null;
-};
-
-window.onmouseup = () => {
-  if (!dragTarget) return;
-
-  save();
-  dragTarget = null;
-  isDraggingAvatar = false;
-};
-
-avatar.onmousedown = e => {
-  if (isModalOpen()) return;
-  if (!e.altKey) return;
-
-  isDraggingAvatar = true;
-  dragTarget = currentQuest.avatar;
-  dragOffset.x = e.clientX - currentQuest.avatar.x;
-  dragOffset.y = e.clientY - currentQuest.avatar.y;
-  e.preventDefault();
-};
-
-avatar.ontouchstart = e => {
-  if (isModalOpen()) return;
-
-  const t = getTouch(e);
-  touchMoved = false;
-  touchStartX = t.clientX;
-  touchStartY = t.clientY;
-
-  dragTarget = currentQuest.avatar;
-  dragOffset.x = t.clientX - currentQuest.avatar.x;
-  dragOffset.y = t.clientY - currentQuest.avatar.y;
-
-  e.preventDefault();
-};
-
-
-
-avatar.ontouchend = e => {
-  if (touchMoved) return;
-  killDrag();
-
-  modalContent.innerHTML = `
-
-    <input value="${currentQuest.avatar.name}">
-    <textarea placeholder="Notes">${currentQuest.avatar.notes}</textarea>
-  `;
-
-  modalContent.querySelector("input").onchange = e => {
-    currentQuest.avatar.name = e.target.value; save();
-  };
-
-  modalContent.querySelector("textarea").onchange = e => {
-    currentQuest.avatar.notes = e.target.value; save();
-  };
-
-  modal.style.display = "flex";
-};
-
-modal.onclick = e => {
-  if (e.target === modal) {
-    modal.style.display = "none";
-    if (window._campfirePoll) {
-      clearInterval(window._campfirePoll);
-      window._campfirePoll = null;
-    }
-  }
-};
-
-
-
-context.onclick = e => {
-  e.stopPropagation();
-  if (e.target === context) context.style.display = "none";
-};
-
-document.getElementById("dock").onclick = e => {
-  const btn = e.target.closest("button");
-  if (!btn) return;
-
-  killDrag();
-
-  const action = btn.dataset.action;
-
-  if (action === "menu") {
-  modalContent.innerHTML = `
-    <iframe
-  src="instructions.html"
-  style="
-    width:100%;
-    height:60vh;
-    border:none;
-    background:#111;
-    border-radius:6px;
-  "
-></iframe>
-  `;
-  modal.style.display = "flex";
-}
-
-
-
-if (action === "map") {
-  modalContent.innerHTML = `
-    <h3 style="text-align:center;">Choose Map</h3>
-    ${Object.keys(maps).map(k =>
-      `<button class="steel" onclick="setMap('${k}'); modal.style.display='none'">${k}</button>`
-    ).join("")}
-  `;
-  modal.style.display = "flex";
-}
-
-if (action === "character") {
-  modalContent.innerHTML = `
-    <h3 style="text-align:center;">Choose Character</h3>
-    <div style="display:flex; gap:12px; justify-content:center;">
-      ${Object.keys(characters).map(k => `
-        <img
-          src="${characters[k]}"
-          style="
-            width:64px;
-            height:64px;
-            cursor:pointer;
-            border:${currentQuest.character === k ? '2px solid #fff' : '2px solid transparent'};
-            border-radius:6px;
-          "
-          onclick="setCharacter('${k}'); modal.style.display='none'"
-        >
-      `).join("")}
-    </div>
-  `;
-  modal.style.display = "flex";
-}
-
-
-
-  if (action === "wishlist") {
-  modalContent.innerHTML = `
-    <h3>Wishlist</h3>
-    <div id="wishlistItems"></div>
-    <input id="wishlistInput" placeholder="Add something you want later → Enter">
-  `;
-  modal.style.display = "flex";
-  renderWishlist();
-}
-
-if (action === "campfire") {
-  // If Supabase is not available (offline), show a message instead of loading campfire
-  if (!sb) {
-    modalContent.innerHTML = `<p style="text-align:center;">Campfire is unavailable offline.</p>`;
-    modal.style.display = "flex";
-  } else {
-    modalContent.innerHTML = `
-  <h3 style="text-align:center;">Join the Campfire</h3>
-
-  <div id="campfireMessages">Loading…</div>
-
-  <hr class="cf-divider">
-
-  <textarea id="cfMsg" placeholder="Leave a thought…"></textarea>
-
-  <input id="cfName" placeholder="Name (optional)">
-
-  <button id="cfSend">Leave Message</button>
-`;
-    modal.style.display = "flex";
-
-    const loadMessages = () => {
-      sb
-        .from("messages")
-        .select("username, message, created_at")
-        .order("created_at", { ascending: true })
-        .limit(20)
-        .then(res => {
-          const box = document.getElementById("campfireMessages");
-          if (!res.data || res.data.length === 0) {
-            box.innerHTML = "<p>No messages yet.</p>";
-            return;
-          }
-          box.innerHTML = res.data.map(m => {
-            const displayName = (m.username && m.username.trim()) || "someone";
-            return `
-    <p class="cf-msg">
-      <span class="cf-name" style="color:${nameColor(displayName)}">
-        ${displayName}
-      </span>
-      <span class="cf-text">${m.message}</span>
+<div class="container">
+
+<header>
+  <img src="icons/reward-dock.png" alt="Veronium logo">
+  <span>VERONIUM</span>
+</header>
+
+<div class="hero">
+  <div>
+    <h1>Turn your life into a game.</h1>
+    <p>
+      Achieve milestones, defeat enemies, complete quests, and earn real rewards.
+      Are you ready to finally start crushing your goals?
     </p>
-  `;
-          }).join("");
-          box.scrollTop = box.scrollHeight;
-        });
-    };
 
-    loadMessages();
-    window._campfirePoll = setInterval(loadMessages, 15000);
+    <a
+  href="https://buy.stripe.com/6oU28tdbc4QAaYR2Pt4AU00"
+  class="btn"
+>
+  Get Lifetime Access
+</a>
 
-    document.getElementById("cfSend").onclick = () => {
-      const name = document.getElementById("cfName").value || "anon";
-      const msg = document.getElementById("cfMsg").value.trim();
-      if (!msg) return;
-      sb.from("messages").insert({
-        username: name,
-        message: msg
-      }).then(() => {
-        document.getElementById("cfMsg").value = "";
-        loadMessages();
-      });
-    };
-  }
-}
+<p style="margin-top:10px; font-size:13px; color:var(--muted);">
+  One-time payment • No subscription • Lifetime access
+</p>
 
 
-};
+  </div>
 
-function renderWishlist() {
-  const box = document.getElementById("wishlistItems");
-  if (!box) return;
+  <img
+    src="example-board.png"
+    alt="Veronium RPG map example"
+    class="board"
+  >
+</div>
 
-  if (!currentQuest.wishlist) currentQuest.wishlist = [];
+<section class="section-panel">
+  <div class="split">
+    <img src="example-board-2.png" alt="Veronium map example">
 
-  box.innerHTML = "";
+    <div>
+      <h2>What is VERONIUM?</h2>
+      <p>
+        Veronium is a goal tracking tool that helps you achieve your goals by turning your life into an RPG.
+        Instead of boring lists, you get a world map. Every task moves you forward. Every win feels earned.
+      </p>
 
-  currentQuest.wishlist.forEach((item, i) => {
-    const row = document.createElement("div");
-    row.className = "task";
+      <a
+  href="https://buy.stripe.com/6oU28tdbc4QAaYR2Pt4AU00"
+  class="btn"
+>
+  Get Lifetime Access
+</a>
 
-
-    const text = document.createElement("span");
-    text.textContent = item;
-
-    const del = document.createElement("button");
-    del.textContent = "🗑";
-    del.onclick = () => {
-      currentQuest.wishlist.splice(i, 1);
-      save();
-      renderWishlist();
-    };
-
-    row.append(text, del);
-    box.appendChild(row);
-  });
-
-  const input = document.getElementById("wishlistInput");
-  if (!input) return;
-
-  input.onkeydown = e => {
-    if (e.key === "Enter" && input.value.trim()) {
-      currentQuest.wishlist.push(input.value.trim());
-      input.value = "";
-      save();
-      renderWishlist();
-    }
-  };
-}
+    </div>
+  </div>
+</section>
 
 
-drawAvatar();
-drawMilestones();
+<section class="section-panel">
+  <div class="features">
+    <div class="feature">
+      <img src="website/website-milestones.png" alt="Progress on the map">
+      <h3>See progress clearly</h3>
+      <p>
+        Your goals live on a map.
+        You always know where you are and what comes next.
+      </p>
+    </div>
 
-const mapSelect = document.getElementById("mapSelect");
-// Some views may not have a map selector. Guard against null.
-if (mapSelect) {
-  mapSelect.value = currentQuest.currentMap;
-  mapSelect.onchange = e => setMap(e.target.value);
-}
+    <div class="feature">
+      <img src="website/website-enemies.png" alt="Defeat enemies">
+      <h3>Beat procrastination</h3>
+      <p>
+        Enemies represent tasks you keep avoiding.
+        You don’t skip them. You defeat them, and get rewarded.
+      </p>
+    </div>
 
-// --- SUPABASE READ TEST ---
-// Only run the test query if Supabase is available. Without this guard,
-// calling methods on a null sb will throw and break the rest of the script.
-if (sb) {
-  sb
-    .from("messages")
-    .select("username, message, created_at")
-    .order("created_at", { ascending: false })
-    .limit(5)
-    .then(res => {
-      console.log("Campfire messages:", res);
-    });
-}
+    <div class="feature">
+      <img src="website/website-rewards.png" alt="Real rewards">
+      <h3>Earn real rewards</h3>
+      <p>
+        Choose rewards you actually want.
+        Fun becomes part of progress, not a distraction.
+      </p>
+    </div>
+  </div>
+  <a
+  href="https://buy.stripe.com/6oU28tdbc4QAaYR2Pt4AU00"
+  class="btn"
+>
+  Get Lifetime Access
+</a>
 
-// Quest sidebar logic
-const questSidebar = document.getElementById("questSidebar");
-const questListEl = document.getElementById("questList");
-const addQuestButton = document.getElementById("addQuestButton");
 
-function toggleQuestSidebar() {
-  questSidebar.classList.toggle("open");
-}
+</section>
 
-function renderQuests() {
-  questListEl.innerHTML = "";
-  state.quests.forEach(q => {
-    const item = document.createElement("div");
-    item.className = "quest-item" + (q.id === state.activeQuestId ? " active" : "");
-    // name input for editing quest name
-    const input = document.createElement("input");
-    input.value = q.name;
-    input.onchange = () => {
-      q.name = input.value.trim() || "Untitled Quest";
-      save();
-      renderQuests();
-    };
-    input.onkeydown = (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        input.blur();
-      }
-    };
-    item.appendChild(input);
-    item.onclick = (e) => {
-      // ignore click when editing
-      if (e.target === input) return;
-      if (state.activeQuestId !== q.id) {
-        state.activeQuestId = q.id;
-        currentQuest = getCurrentQuest();
-        setMap(currentQuest.currentMap || "mountain");
-        if (currentQuest.character && characters[currentQuest.character]) {
-          avatar.src = characters[currentQuest.character];
-        }
-        drawAvatar();
-        drawMilestones();
-        renderWishlist();
-        renderQuests();
-      }
-      questSidebar.classList.remove("open");
-    };
-    questListEl.appendChild(item);
-  });
-}
+<section class="section-panel" style="box-shadow:none;">
 
-addQuestButton.onclick = () => {
-  const q = newQuest("New Quest");
-  state.quests.push(q);
-  state.activeQuestId = q.id;
-  currentQuest = q;
-  save();
-  setMap(currentQuest.currentMap || "mountain");
-  if (currentQuest.character && characters[currentQuest.character]) {
-    avatar.src = characters[currentQuest.character];
-  }
-  drawAvatar();
-  drawMilestones();
-  renderWishlist();
-  renderQuests();
-};
+  <p style="font-size:18px; font-style:italic; max-width:720px;">
+    “Every goal tracker I tried felt like homework.
+    I wanted my life to feel like the adventure that it is.”
+  </p>
+  <p style="margin-top:10px; color:var(--muted);">
+    — Founder of Veronium
+  </p>
+</section>
 
-// Add toggle to quests button
-document.querySelector('[data-action="quests"]').onclick = () => {
-  toggleQuestSidebar();
-};
 
-// Initial quest render
-renderQuests();
+<section class="ltd">
+  <h2>Lifetime Access</h2>
+  <p>
+    One payment. No subscription.
+    You get Veronium forever.
+  </p>
 
-</script>
+  <ul>
+    <li>Unlimited use</li>
+    <li>All future features included</li>
+    <li>Early users help shape the app</li>
+  </ul>
+<p style="margin-top:20px; font-size:18px;">
+  <span style="opacity:.7;">Normally $9/month</span><br>
+  <strong style="font-size:26px; color:var(--green);">
+    Today: $39/lifetime
+  </strong>
+</p>
 
+
+<p style="margin-top:6px; font-size:13px; color:var(--muted);">
+  Lifetime deal available for early users only.
+</p>
+
+<p style="margin-top:12px; font-size:14px; color:var(--text);">
+  ✅ After purchase, you’ll get instant access to Veronium and can start using it immediately.
+</p>
+
+  <a
+  href="https://buy.stripe.com/6oU28tdbc4QAaYR2Pt4AU00"
+  class="btn"
+>
+  Get Lifetime Access
+</a>
+
+  <p style="margin-top:14px; font-size:13px; opacity:.7;">
+  🔒 Secure checkout via Stripe • Instant access
+</p>
+
+
+</section>
+
+<footer>
+  Built for people who want progress to feel good.
+</footer>
+
+</div>
 </body>
 </html>
