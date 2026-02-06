@@ -489,7 +489,8 @@ button.steel:hover {
 <body>
 
 <!-- checks if the user paid -->
- <script>
+<!-- access gate -->
+<script>
   const params = new URLSearchParams(window.location.search);
   const paid = params.get("paid");
 
@@ -509,36 +510,86 @@ button.steel:hover {
   if (!hasPaid && !isLocal) {
     document.body.innerHTML = `
       <div style="
-        background:#0b0f0c;
+        background:
+          radial-gradient(
+            600px 400px at center,
+            rgba(45,255,119,.12),
+            transparent 65%
+          ),
+          #0b0f0c;
         color:#e7f4ec;
         height:100vh;
         display:flex;
         align-items:center;
         justify-content:center;
-        flex-direction:column;
         text-align:center;
         font-family:system-ui;
       ">
-        <h1>Access locked 🔒</h1>
-        <p>You need Lifetime Access to use Veronium.</p>
-        <a href="/index.html"
-           style="
-             margin-top:20px;
-             padding:14px 28px;
-             background:#2dff77;
-             color:#052b14;
-             font-weight:800;
-             border-radius:10px;
-             text-decoration:none;
-           ">
-          Get Lifetime Access
-        </a>
+        <div style="
+          max-width:420px;
+          padding:40px 32px;
+          background:linear-gradient(180deg, #141b17, #0c110e);
+          border:1px solid rgba(45,255,119,.25);
+          border-radius:22px;
+          box-shadow:0 30px 90px rgba(0,0,0,.65);
+        ">
+          <h1 style="
+            margin:0 0 12px;
+            font-size:34px;
+            font-weight:800;
+          ">
+            This world is locked 🔒
+          </h1>
+
+          <p style="
+            margin:0 0 10px;
+            font-size:16px;
+            color:#a3bfb0;
+          ">
+            Veronium is available to Lifetime Members only.
+          </p>
+
+          <p style="
+            margin:0 0 26px;
+            font-size:15px;
+            color:#a3bfb0;
+          ">
+            Unlock your map, begin your quests, and turn your goals into an adventure.
+          </p>
+
+          <a href="/index.html"
+             style="
+               display:inline-flex;
+               align-items:center;
+               justify-content:center;
+               padding:16px 32px;
+               background:#2dff77;
+               color:#052b14;
+               font-weight:800;
+               font-size:16px;
+               border-radius:12px;
+               text-decoration:none;
+               box-shadow:0 12px 34px rgba(45,255,119,.35);
+               transition:transform .15s ease, background .15s ease;
+             "
+             onmouseover="this.style.transform='translateY(-1px)'"
+             onmouseout="this.style.transform='translateY(0)'"
+          >
+            Get Lifetime Access →
+          </a>
+
+          <p style="
+            margin-top:16px;
+            font-size:13px;
+            opacity:.65;
+          ">
+            One-time purchase • No subscription • Lifetime access
+          </p>
+        </div>
       </div>
     `;
   }
 </script>
-
-
 
 
 <div id="mobileGate">
@@ -575,7 +626,6 @@ button.steel:hover {
   <button data-action="campfire">🔥</button>
   <button data-action="quests">📜</button>
 </div>
-
 
 <script>
 
