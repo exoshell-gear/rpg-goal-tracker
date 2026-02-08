@@ -58,6 +58,29 @@ header span {
   font-weight: 600;
 }
 
+/*Announcement*/
+
+.announcement-bar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+
+  width: 100%;
+  padding: 10px 16px;
+
+  background: #0c110e;
+  border-bottom: 1px solid rgba(45,255,119,.25);
+
+  color: var(--text);
+  text-align: center;
+  font-size: 14px;
+}
+
+.announcement-bar strong {
+  color: var(--green);
+}
+
+
 /* HERO */
 .hero {
   background: linear-gradient(180deg, #141b17, #0c110e);
@@ -322,6 +345,13 @@ footer {
 </head>
 
 <body>
+
+<div class="announcement-bar">
+  <strong>Lifetime Offer ends in 5 days.</strong> <i>Normally $9.99/mo</i>
+</div>
+
+
+
 <div class="container">
 
 <header>
@@ -333,7 +363,7 @@ footer {
   <div>
     <h1>Gamify your life & finally achieve your goals.</h1>
     <p>
-      Veronium helps you beat procrastination, stay focused, track progress, and achieve your goals. It is also an immersive world with quests, enemies, wizards, and dragons.
+      Veronium helps you beat procrastination, stay focused, and achieve your goals. It is also an immersive world with quests, enemies, wizards, and dragons.
     </p>
 
     <a
@@ -344,7 +374,7 @@ footer {
 </a>
 
 <p style="margin-top:10px; font-size:13px; color:var(--muted);">
-  One-time payment • No subscription • Lifetime access
+  No subscription • Lifetime access
 </p>
 
 
@@ -455,7 +485,7 @@ footer {
 
 
 <p style="margin-top:6px; font-size:13px; color:var(--muted);">
-  Lifetime deal available for early users only.
+  ⏰ Lifetime Deal ends in 5 days. After that, Veronium will be $9/month.
 </p>
 
 <p style="margin-top:12px; font-size:14px; color:var(--text);">
