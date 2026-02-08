@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>Veronium — Roadmap</title>
+<link rel="icon" href="favicon.png" />
+
+<style>
+:root{
+  --green:#2dff77;
+  --green-dark:#1fd866;
+  --bg:#0b0f0c;
+  --stroke:rgba(255,255,255,0.06);
+  --text:#e7f4ec;
+  --muted:#a3bfb0;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(900px 600px at top left, rgba(45,255,119,.14), rgba(45,255,119,.05) 45%, transparent 70%),
+    var(--bg);
+}
+
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:24px 16px 48px;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+header img{width:34px;height:34px}
+header span{font-size:18px;font-weight:600}
+
+.toplinks{
+  display:flex;
+  gap:8px;
+}
+
+a.link{
+  color:var(--muted);
+  text-decoration:none;
+  font-size:13px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(10,14,11,.25);
+}
+
+/* HERO */
+.hero{
+  background:linear-gradient(180deg,#141b17,#0c110e);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 26px 70px rgba(0,0,0,.6);
+  margin-bottom:22px;
+}
+
+.hero h1{
+  margin:0 0 10px;
+  font-size:42px;
+  line-height:1.05;
+}
+
+.hero p{
+  margin:0;
+  font-size:15.5px;
+  color:var(--muted);
+  line-height:1.55;
+  max-width:760px;
+}
+
+.pillrow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+
+.pill{
+  font-size:12px;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(45,255,119,.22);
+  background:rgba(45,255,119,.08);
+}
+
+.pill.gray{
+  border-color:rgba(255,255,255,.08);
+  background:rgba(10,14,11,.22);
+}
+
+/* PANELS */
+.section-panel{
+  background:linear-gradient(180deg,#141b17,#0c110e);
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  padding:24px;
+  margin-bottom:18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.55);
+}
+
+.section-panel h2{
+  margin:0 0 10px;
+  font-size:26px;
+}
+
+.section-panel p{
+  margin:0;
+  font-size:15px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* ROADMAP */
+.roadmap{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-top:16px;
+}
+
+.column{
+  background:linear-gradient(180deg,#101613,#0c110e);
+  border:1px solid rgba(45,255,119,.18);
+  border-radius:14px;
+  padding:16px;
+}
+
+.colhead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.colhead h3{
+  font-size:13px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.badge{
+  font-size:11px;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.badge.green{
+  border-color:rgba(45,255,119,.3);
+  background:rgba(45,255,119,.1);
+}
+
+.item{
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:10px;
+  margin-top:10px;
+}
+
+.item:first-child{
+  border-top:none;
+  padding-top:0;
+  margin-top:0;
+}
+
+.item strong{
+  display:block;
+  font-size:14px;
+  margin-bottom:4px;
+}
+
+.item span{
+  font-size:13.5px;
+  color:var(--muted);
+  line-height:1.45;
+}
+
+/* CTA */
+.cta{
+  background:
+    radial-gradient(520px 220px at top center, rgba(45,255,119,.18), transparent 65%),
+    linear-gradient(180deg,#141b17,#0c110e);
+  border:1px solid rgba(45,255,119,.25);
+  border-radius:18px;
+  padding:26px;
+  text-align:center;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--green);
+  color:#052b14;
+  padding:14px 24px;
+  font-size:15px;
+  font-weight:800;
+  border-radius:10px;
+  text-decoration:none;
+  box-shadow:0 12px 34px rgba(45,255,119,.35);
+}
+
+.btn.secondary{
+  background:transparent;
+  color:var(--green);
+  border:1px solid rgba(45,255,119,.35);
+  box-shadow:none;
+}
+
+.btnrow{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+footer{
+  text-align:center;
+  font-size:12.5px;
+  color:#6f8f7e;
+  margin-top:28px;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .hero h1{font-size:34px}
+  .roadmap{grid-template-columns:1fr}
+  header{flex-direction:column;align-items:flex-start}
+  .toplinks{flex-wrap:wrap}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <div class="brand">
+    <img src="icons/reward-dock.png" alt="Veronium logo">
+    <span>VERONIUM</span>
+  </div>
+  <div class="toplinks">
+    <a class="link" href="index.html">Lifetime Deal</a>
+    <a class="link" href="partners.html">Affiliate</a>
+    <a class="link" href="play.html">Open App</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Roadmap</h1>
+  <p>
+    Veronium was built as a personal tool to make progress feel fun instead of forced.
+    After it actually worked, it became public.
+    This is where it’s headed next.
+  </p>
+
+  <div class="pillrow">
+    <div class="pill">Early users shape direction</div>
+    <div class="pill">Desktop + tablet first</div>
+    <div class="pill gray">No fake timelines</div>
+  </div>
+</section>
+
+<section class="section-panel">
+  <h2>What Veronium is becoming</h2>
+  <p>
+    Veronium turns everyday life into a fantasy adventure.
+    Goals become quests. Avoided tasks become enemies. Big goals become dragons.
+    You stop losing track and start enjoying progress.
+  </p>
+
+  <div class="roadmap">
+    <div class="column">
+      <div class="colhead">
+        <h3>Now</h3>
+        <div class="badge green">In progress</div>
+      </div>
+      <div class="item">
+        <strong>Polish & clarity</strong>
+        <span>Everything feels calmer, clearer, and intentional.</span>
+      </div>
+      <div class="item">
+        <strong>Onboarding</strong>
+        <span>Start using Veronium in minutes.</span>
+      </div>
+      <div class="item">
+        <strong>Stability</strong>
+        <span>Your progress always feels safe.</span>
+      </div>
+    </div>
+
+    <div class="column">
+      <div class="colhead">
+        <h3>Next</h3>
+        <div class="badge">Queued</div>
+      </div>
+      <div class="item">
+        <strong>Pinned Notes</strong>
+        <span>Keep your main focus visible.</span>
+      </div>
+      <div class="item">
+        <strong>Rewards upgrades</strong>
+        <span>Make rewards feel earned and guilt-free.</span>
+      </div>
+      <div class="item">
+        <strong>More maps</strong>
+        <span>Different worlds for different seasons.</span>
+      </div>
+    </div>
+
+    <div class="column">
+      <div class="colhead">
+        <h3>Later</h3>
+        <div class="badge">Planned</div>
+      </div>
+      <div class="item">
+        <strong>Mobile version</strong>
+        <span>Only if it feels good on a small screen.</span>
+      </div>
+      <div class="item">
+        <strong>Community</strong>
+        <span>Optional ways to connect with other adventurers.</span>
+      </div>
+      <div class="item">
+        <strong>Light integrations</strong>
+        <span>Helpful, not distracting.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-panel">
+  <h2>How priorities work</h2>
+  <p>
+    If something helps people procrastinate less, enjoy progress more,
+    or reward themselves without guilt, it moves up.
+    If it turns Veronium into a spreadsheet, it doesn’t get built.
+  </p>
+</section>
+
+<section class="cta">
+  <h2 style="margin:0 0 6px;font-size:28px;">Get lifetime access while it’s open</h2>
+  <p style="margin:0;color:var(--muted);font-size:14.5px;">
+    One payment. No subscription. All future updates included.
+  </p>
+  <div class="btnrow">
+    <a class="btn" href="https://buy.stripe.com/6oU28tdbc4QAaYR2Pt4AU00">Get Lifetime Access</a>
+    <a class="btn secondary" href="play.html">Open the App</a>
+  </div>
+</section>
+
+<footer>
+  Built for people who want progress to feel good.
+</footer>
+
+</div>
+</body>
+</html>
