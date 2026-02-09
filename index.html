@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<!--Promotekit-->
+<script async src="https://cdn.promotekit.com/promotekit.js" data-promotekit="399159dd-ca1d-495e-a70d-7f4b9888fb62"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(function () {
+        document.querySelectorAll('a[href^="https://buy.stripe.com/"]').forEach(function (link) {
+            var oldBuyUrl = link.getAttribute("href");
+            var referralId = window.promotekit_referral;
+            if (!oldBuyUrl.includes("client_reference_id")) {
+                var separator = oldBuyUrl.includes("?") ? "&" : "?";
+                var newBuyUrl = oldBuyUrl + separator + "client_reference_id=" + referralId;
+                link.setAttribute("href", newBuyUrl);
+            }
+        });
+
+        document.querySelectorAll("[pricing-table-id]").forEach(function (element) {
+            element.setAttribute("client-reference-id", window.promotekit_referral);
+        });
+
+        document.querySelectorAll("[buy-button-id]").forEach(function (element) {
+            element.setAttribute("client-reference-id", window.promotekit_referral);
+        });
+    }, 1500);
+});
+</script>
+
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
