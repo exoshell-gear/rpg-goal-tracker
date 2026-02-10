@@ -7,6 +7,14 @@
 <title>Welcome to Veronium</title>
 <link rel="icon" href="favicon.png" />
 
+<script>
+  // Persist payment access
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("paid") === "true") {
+    localStorage.setItem("veronium_paid", "true");
+  }
+</script>
+
 <style>
 :root {
   --green: #2dff77;
@@ -18,20 +26,6 @@
 }
 
 * { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--text);
-  background:
-    radial-gradient(
-      900px 600px at top left,
-      rgba(45,255,119,.14),
-      rgba(45,255,119,.05) 45%,
-      transparent 70%
-    ),
-    var(--bg);
-}
 
 body {
   margin: 0;
@@ -50,7 +44,6 @@ body {
 
   background-repeat: no-repeat;
 }
-
 
 .container {
   max-width: 900px;
@@ -93,31 +86,35 @@ header span {
   font-size: 16px;
   color: var(--muted);
   max-width: 620px;
-  margin: 0 auto 16px;
+  margin: 0 auto 18px;
 }
 
 .notice {
-  margin-top: 28px;
-  padding: 18px;
+  margin-top: 26px;
+  padding: 20px 24px;
   border-radius: 14px;
-  background: rgba(45,255,119,.08);
-  border: 1px solid rgba(45,255,119,.25);
-  color: var(--text);
-  font-size: 15px;
+  background: linear-gradient(180deg, #143021, #0c1f15);
+  border: 1px solid rgba(45,255,119,.35);
+  box-shadow: 0 12px 34px rgba(0,0,0,.4);
+}
+
+.notice strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 26px;
+  margin-top: 28px;
 
   background: var(--green);
   color: #052b14;
   padding: 16px 32px;
   font-size: 16px;
   font-weight: 800;
-  border-radius: 10px;
+  border-radius: 12px;
 
   text-decoration: none;
   cursor: pointer;
@@ -134,7 +131,7 @@ header span {
 .footer-note {
   margin-top: 18px;
   font-size: 13px;
-  opacity: .7;
+  opacity: .65;
 }
 
 @media (max-width: 700px) {
@@ -162,37 +159,28 @@ header span {
 </header>
 
 <div class="panel">
-  <h1 style="margin-bottom:12px;">
-  You’re in!
-</h1>
+  <h1>You’re in!</h1>
 
-<p style="max-width:520px; margin:0 auto 28px; color:#a3bfb0;">
-  Welcome to Veronium. You’re now an early lifetime member, ready to turn your goals
-  into an adventure.
-</p>
+  <p>
+    Thank you for supporting Veronium and becoming an early member.
+    You’re now ready to turn your goals into a real adventure.
+  </p>
 
-<div style="
-  margin:0 auto 22px;
-  max-width:520px;
-  padding:20px 24px;
-  background:linear-gradient(180deg, #143021, #0c1f15);
-  border:1px solid rgba(45,255,119,.35);
-  border-radius:14px;
-  box-shadow:0 12px 34px rgba(0,0,0,.4);
-">
-  <strong style="display:block; margin-bottom:6px;">
-    Your journey begins on desktop.
-  </strong>
-  <span style="color:#a3bfb0;">
-    We’ve emailed you a private access link.  
-    Open it on your computer to begin your adventure.
-  </span>
-</div>
+  <div class="notice">
+    <strong>Your journey begins on desktop.</strong>
+    <span style="color:var(--muted);">
+      Veronium is currently desktop-only.  
+      If you purchased on mobile, open this page on your computer to begin.
+    </span>
+  </div>
 
-<p style="font-size:13px; opacity:.6;">
-  On mobile? Check your email on desktop to continue.
-</p>
+  <a href="/play.html?paid=true" class="btn">
+    Enter Veronium →
+  </a>
 
+  <div class="footer-note">
+    One-time purchase • Lifetime access • No subscription
+  </div>
 </div>
 
 </div>
