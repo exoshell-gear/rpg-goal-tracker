@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wizard’s Wisdom — Veronium</title>
+
+<style>
+:root{
+  --green:#2dff77;
+  --green-dark:#1fd866;
+  --bg:#0b0f0c;
+  --text:#e7f4ec;
+  --muted:#a3bfb0;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:
+    radial-gradient(900px 600px at 50% -10%, rgba(45,255,119,.15), transparent 60%),
+    radial-gradient(800px 500px at 50% 120%, rgba(45,255,119,.08), transparent 60%),
+    #0b0f0c;
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* floating top menu */
+.top-nav{
+  position:absolute;
+  top:20px;
+  display:flex;
+  gap:20px;
+  font-size:14px;
+}
+
+.top-nav a{
+  color:var(--muted);
+  text-decoration:none;
+}
+
+.top-nav a:hover{
+  color:var(--text);
+}
+
+/* center layout */
+.wrapper{
+  flex:1;
+  width:100%;
+  max-width:800px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:10px 24px 60px;
+  text-align:center;
+}
+
+.wizard-img{
+  width:140px;
+  margin-bottom:10px;
+  filter:drop-shadow(0 20px 60px rgba(0,0,0,.6));
+}
+
+h1{
+  font-size:18px;
+  font-weight:500;
+  color:var(--muted);
+  margin-bottom:20px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* BIG QUOTE */
+.quote{
+  font-size:clamp(28px, 5vw, 56px);
+  font-weight:600;
+  line-height:1.2;
+  max-width:900px;
+  margin-bottom:40px;
+  transition:opacity .25s ease, transform .25s ease;
+}
+
+.quote.fade{
+  opacity:0;
+  transform:translateY(8px);
+}
+
+/* button */
+button{
+  width:100%;
+  max-width:420px;
+  padding:16px 24px;
+  border:none;
+  border-radius:16px;
+  font-size:16px;
+  font-weight:700;
+  background:linear-gradient(180deg,var(--green),var(--green-dark));
+  color:#061009;
+  cursor:pointer;
+  box-shadow:0 20px 60px rgba(45,255,119,.15);
+  transition:transform .1s ease, filter .2s ease;
+}
+
+button:hover{
+  filter:brightness(1.05);
+}
+
+button:active{
+  transform:translateY(2px);
+}
+
+.small-actions{
+  margin-top:18px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+.small-actions span{
+  cursor:pointer;
+  margin:0 10px;
+}
+
+.tip{
+  margin-top:14px;
+  font-size:12px;
+  color:var(--muted);
+  opacity:.7;
+}
+
+@media (max-width: 600px){
+  .quote{
+    font-size: 40px;
+    line-height: 1.15;
+  }
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div class="top-nav">
+  <a href="play.html">Enter Veronium</a>
+</div>
+
+<div class="wrapper">
+
+  <img src="wizard.png" class="wizard-img">
+
+  <h1>The Wizard Speaks</h1>
+
+  <div id="quote" class="quote"></div>
+
+  <button onclick="reveal()">Reveal Wisdom</button>
+
+  <div class="small-actions">
+    <span onclick="copyQuote()">Copy</span>
+    <span>///</span>
+    <span onclick="shareQuote()">Share</span>
+  </div>
+
+  <div class="tip">
+    Press space for next
+  </div>
+
+</div>
+
+<script>
+const QUOTES = [
+"You don’t have to. You get to.",
+"Just start.",
+"Done is better than perfect.",
+"What you seek is seeking you.",
+"Life is pain, uncertaninty, and constant work.",
+"There are only good days and better days.",
+"A goal without a plan is just a dream.",
+"The storm will pass and you will still be standing.",
+"Just because you can't see it doesn't mean the sun isn't there above the clouds.",
+"Just leap, and the universe will catch you.",
+"Temptation is the devil in disguise.",
+"What you resist, persists.",
+"There will never be a perfect time.",
+"Adapt to your unexpected present instead of missing your nostalgic past.",
+"There is so much more to the story than the page you are stuck on.",
+"Handle what is in front of you, and watch your anxieties dissipate.",
+"A prince is not respected in his hometown.",
+"Don't say it can't be done. Ask what it will take..",
+"Sweet is the sleep of a laboring man.",
+"It's not happening to you, it's happening for you.",
+"That which we can be, we must be.",
+"Things get harder just before you level up.",
+"Failures are stepping stones to success.",
+"These are the days that must happen to you.",
+"Patience + optimism = success.",
+"The one who says he can do it and the one who says he can't, are both right.",
+"Drink water when you are not thirsty.",
+"The master has failed more times than the beginner has tried.",
+"If I had 8 hours to chop down a tree, I'd spend 6 of them sharpening my axe.",
+"Too much skepticism will keep you stuck where you are.",
+"Big fish swim alone.",
+"Everyone burns their first pancake.",
+"If someone says no, there's another person in line behind them who will say yes.",
+"Who must you become in order to get what you want?.",
+"Hell is the place where the person you are meets the person you could have been.",
+"Transitions are difficult.",
+"If you are to sail, sail towards something.",
+"Do something a hundred times before you judge yourself.",
+"Done is better than perfect.",
+"Worst case scenario - you start from nothing.",
+"If you can't do it slow, you can't do it fast.",
+"A goal without a plan is just a dream.",
+"A goal without a plan is just a dream.",
+"A goal without a plan is just a dream.",
+"A goal without a plan is just a dream.",
+"A goal without a plan is just a dream.",
+"Trust the process."
+];
+
+let last = -1;
+
+function reveal(){
+  const el = document.getElementById("quote");
+  el.classList.add("fade");
+
+  setTimeout(() => {
+    let i = Math.floor(Math.random()*QUOTES.length);
+    while(i === last && QUOTES.length > 1){
+      i = Math.floor(Math.random()*QUOTES.length);
+    }
+    last = i;
+    el.innerText = "“" + QUOTES[i] + "”";
+    el.classList.remove("fade");
+  },150);
+}
+
+function copyQuote(){
+  navigator.clipboard.writeText(
+    document.getElementById("quote").innerText
+  );
+}
+
+function shareQuote(){
+  const text = document.getElementById("quote").innerText;
+  if(navigator.share){
+    navigator.share({ text });
+  } else {
+    navigator.clipboard.writeText(text);
+  }
+}
+
+document.addEventListener("keydown", function(e){
+  if(e.code === "Space"){
+    e.preventDefault();
+    reveal();
+  }
+});
+// Reveal one quote immediately on load
+window.addEventListener("DOMContentLoaded", reveal);
+
+
+</script>
+
+</body>
+</html>
