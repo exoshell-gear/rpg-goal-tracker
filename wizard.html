@@ -271,13 +271,19 @@ function copyQuote(){
 }
 
 function shareQuote(){
-  const text = document.getElementById("quote").innerText;
-  if(navigator.share){
-    navigator.share({ text });
+  const shareData = {
+    title: "Wizard’s Wisdom – Veronium",
+    text: "The wizard has a message for you.",
+    url: window.location.href
+  };
+
+  if (navigator.share) {
+    navigator.share(shareData);
   } else {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(window.location.href);
   }
 }
+
 
 document.addEventListener("keydown", function(e){
   if(e.code === "Space"){
