@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Veronium — Flow State Engine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  
+  :root {
+    --emerald-50: #ecfdf5;
+    --emerald-100: #d1fae5;
+    --emerald-200: #a7f3d0;
+    --emerald-300: #6ee7b7;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-700: #047857;
+    --emerald-800: #065f46;
+    --emerald-900: #064e3b;
+    
+    --magic-glow: #22ff88;
+    --magic-soft: #34d399;
+    --magic-muted: #6ee7b7;
+    --magic-dark: #047857;
+    
+    --bg-void: #030503;
+    --bg-deep: #050807;
+    --bg-surface: #0a0f0c;
+    --bg-raised: #101815;
+    
+    --text-primary: #e8fff2;
+    --text-secondary: #9cb3a3;
+    --text-muted: #5a6d60;
+    
+    --border-dim: rgba(34, 255, 136, 0.08);
+    --border-soft: rgba(34, 255, 136, 0.15);
+    --border-bright: rgba(34, 255, 136, 0.3);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 20px rgba(34, 255, 136, 0.15);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: radial-gradient(ellipse at 50% 20%, #0a1510, #030503);
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 0;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(34, 255, 136, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(34, 255, 136, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .app-header {
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--border-dim);
+    background: rgba(5, 8, 7, 0.8);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .app-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--magic-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .app-title::before {
+    content: '◆';
+    font-size: 0.5rem;
+    color: var(--magic-glow);
+  }
+
+  .current-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.75rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--magic-glow), var(--magic-muted));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(34, 255, 136, 0.3);
+  }
+
+  .current-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 0.25rem;
+  }
+
+  /* Main Content */
+  .main-content {
+    flex: 1;
+    padding: 0 1.25rem 1.5rem;
+    overflow-y: auto;
+  }
+
+  /* Current Task Card */
+  .current-task {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, rgba(34, 255, 136, 0.08) 0%, rgba(34, 255, 136, 0.03) 100%);
+    border: 1.5px solid var(--border-bright);
+    border-radius: 28px;
+    padding: 2rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-glow), var(--shadow-md);
+  }
+
+  .current-task::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--magic-glow), transparent);
+    opacity: 0.6;
+  }
+
+  .task-status {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--magic-glow);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .status-pulse {
+    width: 6px;
+    height: 6px;
+    background: var(--magic-glow);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--magic-glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.8); }
+  }
+
+  .task-name {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
+
+  .task-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .task-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(34, 255, 136, 0.1);
+    border: 1px solid var(--border-soft);
+    color: var(--magic-muted);
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .task-badge.duration {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(34, 255, 136, 0.05);
+  }
+
+  .task-badge.ritual::before {
+    content: '🔁';
+    font-size: 0.7rem;
+  }
+
+  .task-actions {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.9rem 1.5rem;
+    border: none;
+    border-radius: 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Space Grotesk', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--magic-soft), var(--magic-dark));
+    color: var(--bg-void);
+    box-shadow: var(--shadow-md), 0 0 20px rgba(34, 255, 136, 0.3);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-sm), 0 0 10px rgba(34, 255, 136, 0.2);
+  }
+
+  .btn-secondary {
+    background: rgba(34, 255, 136, 0.08);
+    color: var(--magic-muted);
+    border: 1px solid var(--border-soft);
+  }
+
+  .btn-secondary:active {
+    background: rgba(34, 255, 136, 0.15);
+  }
+
+  /* Next Up Section */
+  .next-section {
+    margin-top: 1.25rem;
+  }
+
+  .section-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+  }
+
+  .next-item {
+    background: rgba(16, 24, 21, 0.6);
+    border: 1px solid var(--border-dim);
+    border-radius: 20px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .next-item-name {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+  }
+
+  .next-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .meta-separator {
+    color: var(--text-muted);
+    font-size: 0.6rem;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-muted);
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Navigation Bar */
+  .nav-bar {
+    padding: 0.75rem 1.25rem 1.25rem;
+    background: rgba(5, 8, 7, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-dim);
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+  }
+
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  .nav-btn {
+    background: rgba(34, 255, 136, 0.05);
+    border: 1px solid var(--border-dim);
+    border-radius: 16px;
+    padding: 0.9rem 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .nav-btn:active {
+    background: rgba(34, 255, 136, 0.12);
+    border-color: var(--border-soft);
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(3, 5, 3, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: none;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .modal.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 24px;
+    padding: 1.5rem;
+    margin: auto;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .modal h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    color: var(--magic-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .modal h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--magic-soft);
+  }
+
+  .modal-list {
+    margin-bottom: 1.5rem;
+  }
+
+  .list-item {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .list-item-content {
+    flex: 1;
+  }
+
+  .list-item-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+
+  .list-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .delete-btn {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    color: #ff6b6b;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .delete-btn:active {
+    background: rgba(255, 59, 48, 0.2);
+  }
+
+  .add-section {
+    background: rgba(34, 255, 136, 0.03);
+    border: 1px dashed var(--border-soft);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select {
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: 'Space Grotesk', sans-serif;
+    margin-bottom: 0.75rem;
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--border-bright);
+    background: var(--bg-surface);
+  }
+
+  .time-input-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .time-separator {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .day-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .day-tab {
+    padding: 0.5rem 1rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+
+  .day-tab.active {
+    background: rgba(34, 255, 136, 0.15);
+    border-color: var(--border-bright);
+    color: var(--magic-soft);
+  }
+
+  .btn-small {
+    background: var(--magic-dark);
+    color: var(--text-primary);
+    border: none;
+    padding: 0.7rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .btn-small:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .close-modal-btn {
+    background: rgba(34, 255, 136, 0.08);
+    border: 1px solid var(--border-soft);
+    color: var(--text-secondary);
+    padding: 0.85rem;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  /* Completions List */
+  .completions-section {
+    margin-top: 1.5rem;
+  }
+
+  .completion-item {
+    background: rgba(34, 255, 136, 0.03);
+    border: 1px solid var(--border-dim);
+    border-radius: 16px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .completion-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--magic-dark);
+    color: var(--bg-void);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .completion-info {
+    flex: 1;
+  }
+
+  .completion-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+  }
+
+  .completion-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    background: rgba(34, 255, 136, 0.05);
+    border: 1px solid var(--border-dim);
+    border-radius: 18px;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--magic-glow), var(--magic-muted));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="app-header">
+      <div class="header-top">
+        <div class="app-title">Flow State Engine</div>
+      </div>
+      <div class="current-time" id="currentTime">00:00</div>
+      <div class="current-date" id="currentDate">—</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainView">
+      <!-- Dynamic content rendered here -->
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-bar">
+      <div class="nav-grid">
+        <button class="nav-btn" id="tasksBtn">
+          <div class="nav-icon">✦</div>
+          <div>Tasks</div>
+        </button>
+        <button class="nav-btn" id="ritualsBtn">
+          <div class="nav-icon">🔁</div>
+          <div>Rituals</div>
+        </button>
+        <button class="nav-btn" id="scheduleBtn">
+          <div class="nav-icon">📅</div>
+          <div>Schedule</div>
+        </button>
+        <button class="nav-btn" id="categoriesBtn">
+          <div class="nav-icon">⌗</div>
+          <div>Tags</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+<script>
+  // ============ DATA STRUCTURES ============
+  let tasks = [];
+  let rituals = [];
+  let categories = [
+    'Deep Work',
+    'Movement',
+    'Learning',
+    'Creation',
+    'Connection',
+    'Reflection',
+    'Restoration',
+    'Strategy',
+    'Admin',
+    'Health',
+    'Finance',
+    'Marketing',
+    'Product',
+    'Sales',
+    'Research',
+    'Writing',
+    'Design',
+    'Code'
+  ];
+  let settings = { framework: {} };
+  let completions = [];
+
+  // ============ STORAGE ============
+  function saveData() {
+    localStorage.setItem('veronium_tasks', JSON.stringify(tasks));
+    localStorage.setItem('veronium_rituals', JSON.stringify(rituals));
+    localStorage.setItem('veronium_categories', JSON.stringify(categories));
+    localStorage.setItem('veronium_settings', JSON.stringify(settings));
+    localStorage.setItem('veronium_completions', JSON.stringify(completions));
+  }
+
+  function loadData() {
+    const storedTasks = localStorage.getItem('veronium_tasks');
+    const storedRituals = localStorage.getItem('veronium_rituals');
+    const storedCategories = localStorage.getItem('veronium_categories');
+    const storedSettings = localStorage.getItem('veronium_settings');
+    const storedCompletions = localStorage.getItem('veronium_completions');
+    
+    if (storedTasks) tasks = JSON.parse(storedTasks);
+    if (storedRituals) rituals = JSON.parse(storedRituals);
+    if (storedCategories) categories = JSON.parse(storedCategories);
+    if (storedSettings) settings = JSON.parse(storedSettings);
+    if (storedCompletions) completions = JSON.parse(storedCompletions);
+  }
+
+  // ============ TIME HELPERS ============
+  function updateClock() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+    
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayName = days[now.getDay()];
+    const monthName = months[now.getMonth()];
+    const date = now.getDate();
+    document.getElementById('currentDate').textContent = `${dayName} · ${monthName} ${date}`;
+  }
+
+  function getCurrentDayName() {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[new Date().getDay()];
+  }
+
+  function getCurrentTime() {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  function parseTime(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  // ============ TASK LOGIC ============
+  function getScheduledBlocksForToday() {
+    const today = getCurrentDayName();
+    const blocks = settings.framework[today] || {};
+    return Object.entries(blocks).map(([range, category]) => {
+      const [start, end] = range.split('-');
+      return { start, end, category, range };
+    }).sort((a, b) => parseTime(a.start) - parseTime(b.start));
+  }
+
+  function getActiveRitualsForToday() {
+    const today = getCurrentDayName();
+    return rituals.filter(r => r.active && r.dayOfWeek === today)
+      .sort((a, b) => parseTime(a.timeOfDay) - parseTime(b.timeOfDay));
+  }
+
+  function getCombinedSchedule() {
+    const scheduleBlocks = getScheduledBlocksForToday();
+    const todayRituals = getActiveRitualsForToday();
+    
+    const items = [];
+    
+    // Add schedule blocks
+    scheduleBlocks.forEach(block => {
+      items.push({
+        type: 'schedule',
+        time: block.start,
+        data: block
+      });
+    });
+    
+    // Add rituals
+    todayRituals.forEach(ritual => {
+      items.push({
+        type: 'ritual',
+        time: ritual.timeOfDay,
+        data: ritual
+      });
+    });
+    
+    // Sort by time
+    items.sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    
+    return items;
+  }
+
+  function getCurrentTask() {
+    const currentTime = parseTime(getCurrentTime());
+    const schedule = getCombinedSchedule();
+    
+    // Find current time block or ritual
+    for (let i = 0; i < schedule.length; i++) {
+      const item = schedule[i];
+      const itemTime = parseTime(item.time);
+      
+      if (item.type === 'schedule') {
+        const endTime = parseTime(item.data.end);
+        if (currentTime >= itemTime && currentTime < endTime) {
+          return item;
+        }
+      } else if (item.type === 'ritual') {
+        const endTime = itemTime + item.data.duration;
+        if (currentTime >= itemTime && currentTime < endTime) {
+          return item;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  function getNextTasks(limit = 3) {
+    const currentTime = parseTime(getCurrentTime());
+    const schedule = getCombinedSchedule();
+    
+    const upcoming = schedule.filter(item => {
+      const itemTime = parseTime(item.time);
+      return itemTime > currentTime;
+    });
+    
+    return upcoming.slice(0, limit);
+  }
+
+  function getIncompleteTasks() {
+    return tasks.filter(t => !t.completed).slice(0, 3);
+  }
+
+  // ============ UI RENDERING ============
+  function render() {
+    updateClock();
+    const mainView = document.getElementById('mainView');
+    const currentTask = getCurrentTask();
+    const nextTasks = getNextTasks(3);
+    const incompleteTasks = getIncompleteTasks();
+    
+    if (currentTask) {
+      renderCurrentTask(mainView, currentTask, nextTasks);
+    } else if (nextTasks.length > 0) {
+      renderUpcoming(mainView, nextTasks);
+    } else if (incompleteTasks.length > 0) {
+      renderIncompleteTasks(mainView, incompleteTasks);
+    } else {
+      renderEmptyState(mainView);
+    }
+  }
+
+  function renderCurrentTask(container, currentItem, nextItems) {
+    const isRitual = currentItem.type === 'ritual';
+    const item = currentItem.data;
+    
+    let taskName, category, duration;
+    
+    if (isRitual) {
+      taskName = item.title;
+      category = item.category;
+      duration = item.duration;
+    } else {
+      // Schedule block
+      taskName = `${item.category} Block`;
+      category = item.category;
+      const startMin = parseTime(item.start);
+      const endMin = parseTime(item.end);
+      duration = endMin - startMin;
+    }
+    
+    const todayCompletions = completions.filter(c => {
+      const cDate = new Date(c.timestamp);
+      const today = new Date();
+      return cDate.toDateString() === today.toDateString();
+    });
+    
+    container.innerHTML = `
+      <div class="current-task">
+        <div class="task-status">
+          <div class="status-pulse"></div>
+          ${isRitual ? 'Active Ritual' : 'Current Block'}
+        </div>
+        <div class="task-name">${escapeHtml(taskName)}</div>
+        <div class="task-meta">
+          <div class="task-badge">${escapeHtml(category)}</div>
+          <div class="task-badge duration">${formatDuration(duration)}</div>
+          ${isRitual ? '<div class="task-badge ritual">Recurring</div>' : ''}
+        </div>
+        <div class="task-actions">
+          <button class="btn btn-primary" id="completeBtn">✓ Complete</button>
+          <button class="btn btn-secondary" id="skipBtn">→</button>
+        </div>
+      </div>
+      
+      ${nextItems.length > 0 ? `
+        <div class="next-section">
+          <div class="section-header">Up Next</div>
+          ${nextItems.map(next => {
+            const nextIsRitual = next.type === 'ritual';
+            const nextData = next.data;
+            const nextName = nextIsRitual ? nextData.title : `${nextData.category} Block`;
+            const nextCat = nextIsRitual ? nextData.category : nextData.category;
+            const nextDur = nextIsRitual ? nextData.duration : (parseTime(nextData.end) - parseTime(nextData.start));
+            
+            return `
+              <div class="next-item">
+                <div class="next-item-name">${escapeHtml(nextName)} ${nextIsRitual ? '🔁' : ''}</div>
+                <div class="next-item-meta">
+                  <span>${next.time}</span>
+                  <span class="meta-separator">·</span>
+                  <span>${escapeHtml(nextCat)}</span>
+                  <span class="meta-separator">·</span>
+                  <span>${formatDuration(nextDur)}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+      
+      ${todayCompletions.length > 0 ? `
+        <div class="stats-bar">
+          <div class="stat">
+            <div class="stat-value">${todayCompletions.length}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${Math.round(todayCompletions.reduce((sum, c) => sum + c.duration, 0))}m</div>
+            <div class="stat-label">Flow Time</div>
+          </div>
+        </div>
+      ` : ''}
+    `;
+    
+    document.getElementById('completeBtn')?.addEventListener('click', () => {
+      completions.push({
+        id: Date.now(),
+        name: taskName,
+        category: category,
+        duration: duration,
+        timestamp: new Date().toISOString()
+      });
+      saveData();
+      
+      if (isRitual) {
+        // Mark ritual as completed for today (could track this separately if needed)
+      }
+      
+      render();
+    });
+    
+    document.getElementById('skipBtn')?.addEventListener('click', () => {
+      render();
+    });
+  }
+
+  function renderUpcoming(container, nextItems) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-title">Between Sessions</div>
+        <div class="empty-description">Your next scheduled block begins soon</div>
+      </div>
+      
+      <div class="next-section">
+        <div class="section-header">Coming Up</div>
+        ${nextItems.map(next => {
+          const nextIsRitual = next.type === 'ritual';
+          const nextData = next.data;
+          const nextName = nextIsRitual ? nextData.title : `${nextData.category} Block`;
+          const nextCat = nextIsRitual ? nextData.category : nextData.category;
+          const nextDur = nextIsRitual ? nextData.duration : (parseTime(nextData.end) - parseTime(nextData.start));
+          
+          return `
+            <div class="next-item">
+              <div class="next-item-name">${escapeHtml(nextName)} ${nextIsRitual ? '🔁' : ''}</div>
+              <div class="next-item-meta">
+                <span>${next.time}</span>
+                <span class="meta-separator">·</span>
+                <span>${escapeHtml(nextCat)}</span>
+                <span class="meta-separator">·</span>
+                <span>${formatDuration(nextDur)}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function renderIncompleteTasks(container, taskList) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No Active Schedule</div>
+        <div class="empty-description">But you have tasks waiting to be conquered</div>
+      </div>
+      
+      <div class="next-section">
+        <div class="section-header">Pending Tasks</div>
+        ${taskList.map(task => `
+          <div class="next-item">
+            <div class="next-item-name">${escapeHtml(task.title)}</div>
+            <div class="next-item-meta">
+              <span>${escapeHtml(task.category)}</span>
+              <span class="meta-separator">·</span>
+              <span>${formatDuration(task.duration)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderEmptyState(container) {
+    const todayCompletions = completions.filter(c => {
+      const cDate = new Date(c.timestamp);
+      const today = new Date();
+      return cDate.toDateString() === today.toDateString();
+    });
+    
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">✨</div>
+        <div class="empty-title">Clear Horizon</div>
+        <div class="empty-description">Build your flow by adding tasks, rituals, or schedule blocks below</div>
+      </div>
+      
+      ${todayCompletions.length > 0 ? `
+        <div class="stats-bar">
+          <div class="stat">
+            <div class="stat-value">${todayCompletions.length}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${Math.round(todayCompletions.reduce((sum, c) => sum + c.duration, 0))}m</div>
+            <div class="stat-label">Flow Time</div>
+          </div>
+        </div>
+        
+        <div class="completions-section">
+          <div class="section-header">Today's Wins</div>
+          ${todayCompletions.slice(0, 5).reverse().map(comp => `
+            <div class="completion-item">
+              <div class="completion-check">✓</div>
+              <div class="completion-info">
+                <div class="completion-name">${escapeHtml(comp.name)}</div>
+                <div class="completion-time">${new Date(comp.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+  }
+
+  function formatDuration(minutes) {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hrs > 0) {
+      return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+    }
+    return `${minutes}m`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ============ MODALS ============
+  function showTasksModal() {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    
+    function renderTasksModal() {
+      modalContent.innerHTML = `
+        <h2>✦ One-Time Tasks</h2>
+        
+        <div class="modal-list">
+          ${tasks.length === 0 ? '<div class="empty-state"><div class="empty-description">No tasks yet. Create your first one below.</div></div>' : 
+            tasks.map(task => `
+              <div class="list-item">
+                <div class="list-item-content">
+                  <div class="list-item-title">${escapeHtml(task.title)}</div>
+                  <div class="list-item-meta">${escapeHtml(task.category)} · ${task.duration}m ${task.completed ? '✓ Done' : ''}</div>
+                </div>
+                <button class="delete-btn" data-id="${task.id}">✕</button>
+              </div>
+            `).join('')
+          }
+        </div>
+        
+        <div class="add-section">
+          <h3>+ Create Task</h3>
+          <input type="text" id="newTaskTitle" placeholder="What needs to be done?" />
+          <select id="newTaskCategory">
+            ${categories.map(cat => `<option>${escapeHtml(cat)}</option>`).join('')}
+          </select>
+          <input type="number" id="newTaskDuration" placeholder="Duration (minutes)" value="60" />
+          <button class="btn-small" id="addTaskBtn">Add Task</button>
+        </div>
+        
+        <button class="close-modal-btn" id="closeModalBtn">Close</button>
+      `;
+      
+      document.getElementById('addTaskBtn')?.addEventListener('click', () => {
+        const title = document.getElementById('newTaskTitle').value.trim();
+        const category = document.getElementById('newTaskCategory').value;
+        const duration = parseInt(document.getElementById('newTaskDuration').value);
+        
+        if (title && duration > 0) {
+          tasks.push({
+            id: Date.now(),
+            title,
+            category,
+            duration,
+            completed: false
+          });
+          saveData();
+          renderTasksModal();
+          render();
+        }
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.dataset.id);
+          tasks = tasks.filter(t => t.id !== id);
+          saveData();
+          renderTasksModal();
+          render();
+        });
+      });
+      
+      document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    renderTasksModal();
+    modal.classList.add('active');
+  }
+
+  function showRitualsModal() {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    
+    function renderRitualsModal() {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      
+      modalContent.innerHTML = `
+        <h2>🔁 Recurring Rituals</h2>
+        
+        <div class="modal-list">
+          ${rituals.length === 0 ? '<div class="empty-state"><div class="empty-description">No rituals set. Create anchors for your week.</div></div>' :
+            rituals.map(ritual => `
+              <div class="list-item">
+                <div class="list-item-content">
+                  <div class="list-item-title">${escapeHtml(ritual.title)}</div>
+                  <div class="list-item-meta">${ritual.dayOfWeek} at ${ritual.timeOfDay} · ${ritual.duration}m · ${ritual.active ? 'Active' : 'Paused'}</div>
+                </div>
+                <button class="delete-btn" data-id="${ritual.id}">✕</button>
+              </div>
+            `).join('')
+          }
+        </div>
+        
+        <div class="add-section">
+          <h3>+ Create Ritual</h3>
+          <input type="text" id="ritualTitle" placeholder="e.g., Morning Review" />
+          <select id="ritualDay">
+            ${days.map(day => `<option>${day}</option>`).join('')}
+          </select>
+          <div class="time-input-row">
+            <select id="ritualHour">
+              ${Array.from({length: 24}, (_, i) => `<option value="${i}">${i.toString().padStart(2, '0')}</option>`).join('')}
+            </select>
+            <span class="time-separator">:</span>
+            <select id="ritualMinute">
+              ${Array.from({length: 12}, (_, i) => i * 5).map(m => `<option value="${m}">${m.toString().padStart(2, '0')}</option>`).join('')}
+            </select>
+          </div>
+          <select id="ritualCategory">
+            ${categories.map(cat => `<option>${escapeHtml(cat)}</option>`).join('')}
+          </select>
+          <input type="number" id="ritualDuration" placeholder="Duration (minutes)" value="30" />
+          <button class="btn-small" id="addRitualBtn">Create Ritual</button>
+        </div>
+        
+        <button class="close-modal-btn" id="closeModalBtn">Close</button>
+      `;
+      
+      document.getElementById('addRitualBtn')?.addEventListener('click', () => {
+        const title = document.getElementById('ritualTitle').value.trim();
+        const day = document.getElementById('ritualDay').value;
+        const hour = parseInt(document.getElementById('ritualHour').value);
+        const minute = parseInt(document.getElementById('ritualMinute').value);
+        const category = document.getElementById('ritualCategory').value;
+        const duration = parseInt(document.getElementById('ritualDuration').value);
+        
+        if (title && duration > 0) {
+          const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          rituals.push({
+            id: Date.now(),
+            title,
+            category,
+            duration,
+            dayOfWeek: day,
+            timeOfDay: timeStr,
+            active: true
+          });
+          saveData();
+          renderRitualsModal();
+          render();
+        }
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.dataset.id);
+          rituals = rituals.filter(r => r.id !== id);
+          saveData();
+          renderRitualsModal();
+          render();
+        });
+      });
+      
+      document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    renderRitualsModal();
+    modal.classList.add('active');
+  }
+
+  let currentScheduleDay = getCurrentDayName();
+  
+  function showScheduleModal() {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    function renderScheduleModal() {
+      const blocks = settings.framework[currentScheduleDay] || {};
+      
+      modalContent.innerHTML = `
+        <h2>📅 Weekly Schedule</h2>
+        
+        <div class="day-tabs">
+          ${days.map(day => `
+            <div class="day-tab ${day === currentScheduleDay ? 'active' : ''}" data-day="${day}">
+              ${day.slice(0, 3)}
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="modal-list">
+          ${Object.keys(blocks).length === 0 ? '<div class="empty-state"><div class="empty-description">No blocks scheduled for this day.</div></div>' :
+            Object.entries(blocks).map(([range, category]) => `
+              <div class="list-item">
+                <div class="list-item-content">
+                  <div class="list-item-title">${range}</div>
+                  <div class="list-item-meta">${escapeHtml(category)}</div>
+                </div>
+                <button class="delete-btn" data-range="${escapeHtml(range)}">✕</button>
+              </div>
+            `).join('')
+          }
+        </div>
+        
+        <div class="add-section">
+          <h3>+ Add Time Block</h3>
+          <div class="time-input-row">
+            <input type="text" id="startTime" placeholder="09:00" />
+            <span class="time-separator">→</span>
+            <input type="text" id="endTime" placeholder="11:00" />
+          </div>
+          <select id="blockCategory">
+            ${categories.map(cat => `<option>${escapeHtml(cat)}</option>`).join('')}
+          </select>
+          <button class="btn-small" id="addBlockBtn">Add Block</button>
+        </div>
+        
+        <button class="close-modal-btn" id="closeModalBtn">Close</button>
+      `;
+      
+      document.querySelectorAll('.day-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          currentScheduleDay = tab.dataset.day;
+          renderScheduleModal();
+        });
+      });
+      
+      document.getElementById('addBlockBtn')?.addEventListener('click', () => {
+        const start = document.getElementById('startTime').value.trim();
+        const end = document.getElementById('endTime').value.trim();
+        const category = document.getElementById('blockCategory').value;
+        
+        if (start && end) {
+          if (!settings.framework[currentScheduleDay]) {
+            settings.framework[currentScheduleDay] = {};
+          }
+          settings.framework[currentScheduleDay][`${start}-${end}`] = category;
+          saveData();
+          renderScheduleModal();
+          render();
+        }
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const range = btn.dataset.range;
+          delete settings.framework[currentScheduleDay][range];
+          saveData();
+          renderScheduleModal();
+          render();
+        });
+      });
+      
+      document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    renderScheduleModal();
+    modal.classList.add('active');
+  }
+
+  function showCategoriesModal() {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    
+    function renderCategoriesModal() {
+      modalContent.innerHTML = `
+        <h2>⌗ Task Categories</h2>
+        
+        <div class="modal-list">
+          ${categories.map(cat => `
+            <div class="list-item">
+              <div class="list-item-content">
+                <div class="list-item-title">${escapeHtml(cat)}</div>
+              </div>
+              <button class="delete-btn" data-cat="${escapeHtml(cat)}">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="add-section">
+          <h3>+ New Category</h3>
+          <input type="text" id="newCategoryName" placeholder="e.g., Exercise" />
+          <button class="btn-small" id="addCategoryBtn">Add Category</button>
+        </div>
+        
+        <button class="close-modal-btn" id="closeModalBtn">Close</button>
+      `;
+      
+      document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
+        const name = document.getElementById('newCategoryName').value.trim();
+        if (name && !categories.includes(name)) {
+          categories.push(name);
+          saveData();
+          renderCategoriesModal();
+          render();
+        }
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cat = btn.dataset.cat;
+          const inUse = tasks.some(t => t.category === cat) || 
+                        rituals.some(r => r.category === cat) ||
+                        Object.values(settings.framework).some(day => 
+                          Object.values(day).includes(cat)
+                        );
+          
+          if (inUse) {
+            alert(`"${cat}" is currently in use and cannot be deleted.`);
+            return;
+          }
+          
+          categories = categories.filter(c => c !== cat);
+          saveData();
+          renderCategoriesModal();
+          render();
+        });
+      });
+      
+      document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    renderCategoriesModal();
+    modal.classList.add('active');
+  }
+
+  // ============ EVENT LISTENERS ============
+  document.getElementById('tasksBtn').addEventListener('click', showTasksModal);
+  document.getElementById('ritualsBtn').addEventListener('click', showRitualsModal);
+  document.getElementById('scheduleBtn').addEventListener('click', showScheduleModal);
+  document.getElementById('categoriesBtn').addEventListener('click', showCategoriesModal);
+
+  // ============ INITIALIZATION ============
+  loadData();
+  render();
+  setInterval(updateClock, 1000);
+  setInterval(render, 60000); // Re-render every minute to update current task
+</script>
+</body>
+</html>
