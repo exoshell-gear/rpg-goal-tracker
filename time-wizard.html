@@ -64,7 +64,7 @@
     position: relative;
     z-index: 1;
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     display: flex;
     flex-direction: column;
     max-width: 600px;
@@ -680,22 +680,7 @@
   <!-- Edit Ritual Modal -->
   <div class="edit-modal" id="editRitualModal">
     <div class="edit-modal-content">
-      <h2>Edit Ritual</h2>
-      <input type="text" id="editRitualTitle" placeholder="Ritual name" />
-      <div class="section-header">Repeat On</div>
-      <div class="checkbox-group" id="editRitualDays"></div>
-      <div class="section-header">Time</div>
-      <div class="time-input-row">
-        <select id="editRitualHour"></select>
-        <span class="time-separator">:</span>
-        <select id="editRitualMinute"></select>
-      </div>
-      <select id="editRitualCategory"></select>
-      <input type="number" id="editRitualDuration" placeholder="Duration (minutes)" />
-      <div class="modal-actions">
-        <button class="btn btn-secondary" id="cancelEditRitualBtn">Cancel</button>
-        <button class="btn btn-primary" id="saveEditRitualBtn">Save</button>
-      </div>
+      <!-- Content populated dynamically -->
     </div>
   </div>
 
@@ -883,12 +868,14 @@
   }
 
   function findTaskForCategory(category) {
-    // Find first incomplete task that has this category
-    return tasks.find(t => 
+    // Find incomplete tasks with this category, sorted by priority (lower number = higher priority)
+    const matchingTasks = tasks.filter(t => 
       !t.completed && 
       t.categories && 
       t.categories.includes(category)
-    );
+    ).sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    
+    return matchingTasks[0]; // Return highest priority task
   }
 
   // ============ NAVIGATION ============
@@ -975,7 +962,8 @@
         </div>
         ${!taskToShow && !isRitual ? `<div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(34, 255, 136, 0.05); border-radius: 12px; font-size: 0.85rem; color: var(--text-secondary);">No tasks in this category. Add one in the Tasks tab.</div>` : ''}
         <div class="task-actions">
-          <button class="btn btn-primary" id="completeCurrentBtn">✓ Complete${taskToShow ? ' Task' : ''}</button>
+          <button class="btn btn-primary" id="completeCurrentBtn">✓ Complete${taskToShow ? ' & Remove' : ''}</button>
+          ${taskToShow ? '<button class="btn btn-secondary" id="skipCurrentBtn">Skip (keep task)</button>' : ''}
         </div>
       </div>
       
@@ -1019,8 +1007,8 @@
     
     document.getElementById('completeCurrentBtn')?.addEventListener('click', () => {
       if (taskToShow) {
-        // Mark the task as completed
-        taskToShow.completed = true;
+        // Remove the task entirely (auto-delete)
+        tasks = tasks.filter(t => t.id !== taskToShow.id);
       }
       
       completions.push({
@@ -1032,6 +1020,11 @@
       });
       
       saveData();
+      renderHomeScreen();
+    });
+    
+    document.getElementById('skipCurrentBtn')?.addEventListener('click', () => {
+      // Just refresh to show next task without completing
       renderHomeScreen();
     });
   }
@@ -1101,13 +1094,16 @@
   function renderTasksScreen() {
     const container = document.getElementById('tasksScreen');
     
+    // Sort tasks by priority
+    const sortedTasks = [...tasks].sort((a, b) => (a.priority || 999) - (b.priority || 999));
+    
     container.innerHTML = `
       <div class="section-header">All Tasks</div>
-      ${tasks.length === 0 ? '<div class="empty-state"><div class="empty-description">No tasks yet</div></div>' :
-        tasks.map(task => `
+      ${sortedTasks.length === 0 ? '<div class="empty-state"><div class="empty-description">No tasks yet</div></div>' :
+        sortedTasks.map(task => `
           <div class="list-item">
             <div class="list-item-content">
-              <div class="list-item-title">${escapeHtml(task.title)}</div>
+              <div class="list-item-title">${task.priority ? `#${task.priority} ` : ''}${escapeHtml(task.title)}</div>
               <div class="list-item-meta">
                 ${task.categories.map(c => escapeHtml(c)).join(', ')} · ${task.duration}m
                 ${task.completed ? ' · ✓ Done' : ''}
@@ -1124,6 +1120,7 @@
       <div class="add-section">
         <h3>+ Create Task</h3>
         <input type="text" id="newTaskTitle" placeholder="What needs to be done?" />
+        <input type="number" id="newTaskPriority" placeholder="Priority (1 = highest, optional)" min="1" />
         <div class="section-header" style="margin-top: 0.5rem;">Categories (select multiple)</div>
         <div class="category-pills" id="newTaskCategories">
           ${categories.map(cat => `
@@ -1153,6 +1150,7 @@
     document.getElementById('addTaskBtn')?.addEventListener('click', () => {
       const title = document.getElementById('newTaskTitle').value.trim();
       const duration = parseInt(document.getElementById('newTaskDuration').value);
+      const priority = parseInt(document.getElementById('newTaskPriority').value) || null;
       
       if (title && selectedCategories.size > 0 && duration > 0) {
         tasks.push({
@@ -1160,6 +1158,7 @@
           title,
           categories: Array.from(selectedCategories),
           duration,
+          priority,
           completed: false
         });
         saveData();
@@ -1201,6 +1200,19 @@
       </div>
     `).join('');
     
+    // Add priority field if it doesn't exist in modal
+    let priorityInput = document.getElementById('editTaskPriority');
+    if (!priorityInput) {
+      const durationInput = document.getElementById('editTaskDuration');
+      priorityInput = document.createElement('input');
+      priorityInput.type = 'number';
+      priorityInput.id = 'editTaskPriority';
+      priorityInput.placeholder = 'Priority (1 = highest, optional)';
+      priorityInput.min = '1';
+      durationInput.parentNode.insertBefore(priorityInput, durationInput);
+    }
+    priorityInput.value = task.priority || '';
+    
     categoryContainer.querySelectorAll('.category-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         pill.classList.toggle('selected');
@@ -1220,6 +1232,7 @@
     
     task.title = document.getElementById('editTaskTitle').value.trim();
     task.duration = parseInt(document.getElementById('editTaskDuration').value);
+    task.priority = parseInt(document.getElementById('editTaskPriority').value) || null;
     
     const selectedCats = [];
     document.querySelectorAll('#editTaskCategories .category-pill.selected').forEach(pill => {
@@ -1242,72 +1255,66 @@
     document.getElementById('editRitualTitle').value = ritual.title;
     document.getElementById('editRitualDuration').value = ritual.duration;
     
-    // Parse time
-    const [hour, minute] = ritual.timeOfDay.split(':').map(Number);
-    
-    // Populate hour select
-    const hourSelect = document.getElementById('editRitualHour');
-    hourSelect.innerHTML = Array.from({length: 24}, (_, i) => 
-      `<option value="${i}" ${i === hour ? 'selected' : ''}>${i.toString().padStart(2, '0')}</option>`
-    ).join('');
-    
-    // Populate minute select
-    const minuteSelect = document.getElementById('editRitualMinute');
-    minuteSelect.innerHTML = Array.from({length: 12}, (_, i) => i * 5).map(m => 
-      `<option value="${m}" ${m === minute ? 'selected' : ''}>${m.toString().padStart(2, '0')}</option>`
-    ).join('');
-    
-    // Populate category select
-    const categorySelect = document.getElementById('editRitualCategory');
-    categorySelect.innerHTML = categories.map(cat => 
-      `<option ${cat === ritual.category ? 'selected' : ''}>${escapeHtml(cat)}</option>`
-    ).join('');
-    
-    // Populate days checkboxes
-    const daysContainer = document.getElementById('editRitualDays');
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
-    daysContainer.innerHTML = dayNames.map((day, i) => `
-      <div class="checkbox-item">
-        <input type="checkbox" id="editDay${i}" value="${day}" ${ritual.days.includes(day) ? 'checked' : ''} />
-        <label for="editDay${i}">${dayShort[i]}</label>
+    // Use text input for time
+    const modalContent = modal.querySelector('.edit-modal-content');
+    modalContent.innerHTML = `
+      <h2>Edit Ritual</h2>
+      <input type="text" id="editRitualTitle" placeholder="Ritual name" value="${escapeHtml(ritual.title)}" />
+      <div class="section-header">Repeat On</div>
+      <div class="checkbox-group" id="editRitualDays">
+        ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, i) => {
+          const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i];
+          return `
+            <div class="checkbox-item">
+              <input type="checkbox" id="editDay${i}" value="${day}" ${ritual.days.includes(day) ? 'checked' : ''} />
+              <label for="editDay${i}">${dayShort}</label>
+            </div>
+          `;
+        }).join('')}
       </div>
-    `).join('');
+      <div class="section-header">Time</div>
+      <input type="text" id="editRitualTime" placeholder="09:00" pattern="[0-2][0-9]:[0-5][0-9]" value="${ritual.timeOfDay}" style="margin-bottom: 0.65rem;" />
+      <select id="editRitualCategory">
+        ${categories.map(cat => `<option ${cat === ritual.category ? 'selected' : ''}>${escapeHtml(cat)}</option>`).join('')}
+      </select>
+      <input type="number" id="editRitualDuration" placeholder="Duration (minutes)" value="${ritual.duration}" />
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelEditRitualBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveEditRitualBtn">Save</button>
+      </div>
+    `;
+    
+    // Re-attach event listeners
+    document.getElementById('cancelEditRitualBtn').addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+    
+    document.getElementById('saveEditRitualBtn').addEventListener('click', () => {
+      const ritual = rituals.find(r => r.id === editingRitualId);
+      if (!ritual) return;
+      
+      ritual.title = document.getElementById('editRitualTitle').value.trim();
+      ritual.duration = parseInt(document.getElementById('editRitualDuration').value);
+      ritual.category = document.getElementById('editRitualCategory').value;
+      ritual.timeOfDay = document.getElementById('editRitualTime').value.trim();
+      
+      const selectedDays = [];
+      for (let i = 0; i < 7; i++) {
+        const checkbox = document.getElementById(`editDay${i}`);
+        if (checkbox && checkbox.checked) {
+          selectedDays.push(checkbox.value);
+        }
+      }
+      ritual.days = selectedDays;
+      
+      saveData();
+      modal.classList.remove('active');
+      renderRitualsScreen();
+      renderHomeScreen();
+    });
     
     modal.classList.add('active');
   }
-
-  document.getElementById('cancelEditRitualBtn')?.addEventListener('click', () => {
-    document.getElementById('editRitualModal').classList.remove('active');
-  });
-
-  document.getElementById('saveEditRitualBtn')?.addEventListener('click', () => {
-    const ritual = rituals.find(r => r.id === editingRitualId);
-    if (!ritual) return;
-    
-    ritual.title = document.getElementById('editRitualTitle').value.trim();
-    ritual.duration = parseInt(document.getElementById('editRitualDuration').value);
-    ritual.category = document.getElementById('editRitualCategory').value;
-    
-    const hour = parseInt(document.getElementById('editRitualHour').value);
-    const minute = parseInt(document.getElementById('editRitualMinute').value);
-    ritual.timeOfDay = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    
-    const selectedDays = [];
-    for (let i = 0; i < 7; i++) {
-      const checkbox = document.getElementById(`editDay${i}`);
-      if (checkbox && checkbox.checked) {
-        selectedDays.push(checkbox.value);
-      }
-    }
-    ritual.days = selectedDays;
-    
-    saveData();
-    document.getElementById('editRitualModal').classList.remove('active');
-    renderRitualsScreen();
-    renderHomeScreen();
-  });
 
   // ============ RITUALS SCREEN ============
   function renderRitualsScreen() {
@@ -1354,15 +1361,7 @@
         </div>
         
         <div class="section-header" style="margin-top: 0.5rem;">Time</div>
-        <div class="time-input-row">
-          <select id="ritualHour">
-            ${Array.from({length: 24}, (_, i) => `<option value="${i}">${i.toString().padStart(2, '0')}</option>`).join('')}
-          </select>
-          <span class="time-separator">:</span>
-          <select id="ritualMinute">
-            ${Array.from({length: 12}, (_, i) => i * 5).map(m => `<option value="${m}">${m.toString().padStart(2, '0')}</option>`).join('')}
-          </select>
-        </div>
+        <input type="text" id="ritualTime" placeholder="09:00" pattern="[0-2][0-9]:[0-5][0-9]" style="margin-bottom: 0.65rem;" />
         
         <select id="ritualCategory">
           ${categories.map(cat => `<option>${escapeHtml(cat)}</option>`).join('')}
@@ -1374,8 +1373,7 @@
     
     document.getElementById('addRitualBtn')?.addEventListener('click', () => {
       const title = document.getElementById('ritualTitle').value.trim();
-      const hour = parseInt(document.getElementById('ritualHour').value);
-      const minute = parseInt(document.getElementById('ritualMinute').value);
+      const timeStr = document.getElementById('ritualTime').value.trim();
       const category = document.getElementById('ritualCategory').value;
       const duration = parseInt(document.getElementById('ritualDuration').value);
       
@@ -1387,8 +1385,7 @@
         }
       }
       
-      if (title && selectedDays.length > 0 && duration > 0) {
-        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      if (title && timeStr && selectedDays.length > 0 && duration > 0) {
         rituals.push({
           id: Date.now(),
           title,
@@ -1430,6 +1427,19 @@
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const blocks = settings.framework[currentScheduleDay] || {};
     
+    // Sort blocks chronologically by start time
+    const sortedBlocks = Object.entries(blocks).sort((a, b) => {
+      const [rangeA] = a;
+      const [rangeB] = b;
+      const startA = rangeA.split('-')[0];
+      const startB = rangeB.split('-')[0];
+      return parseTime(startA) - parseTime(startB);
+    });
+    
+    // Get rituals for this day
+    const todayRituals = rituals.filter(r => r.days && r.days.includes(currentScheduleDay))
+      .sort((a, b) => parseTime(a.timeOfDay) - parseTime(b.timeOfDay));
+    
     container.innerHTML = `
       <div class="day-tabs">
         ${days.map(day => `
@@ -1440,8 +1450,8 @@
       </div>
       
       <div class="section-header">${currentScheduleDay} Schedule</div>
-      ${Object.keys(blocks).length === 0 ? '<div class="empty-state"><div class="empty-description">No blocks for this day</div></div>' :
-        Object.entries(blocks).map(([range, data]) => {
+      ${sortedBlocks.length === 0 && todayRituals.length === 0 ? '<div class="empty-state"><div class="empty-description">No blocks or rituals for this day</div></div>' : `
+        ${sortedBlocks.map(([range, data]) => {
           const category = data.category || data;
           return `
             <div class="list-item">
@@ -1450,19 +1460,28 @@
                 <div class="list-item-meta">${escapeHtml(category)}</div>
               </div>
               <div class="list-item-actions">
+                <button class="icon-btn" data-edit-block="${escapeHtml(range)}">✎</button>
                 <button class="icon-btn delete" data-delete="${escapeHtml(range)}">✕</button>
               </div>
             </div>
           `;
-        }).join('')
-      }
+        }).join('')}
+        ${todayRituals.map(ritual => `
+          <div class="list-item" style="opacity: 0.7;">
+            <div class="list-item-content">
+              <div class="list-item-title">${ritual.timeOfDay} 🔁</div>
+              <div class="list-item-meta">${escapeHtml(ritual.title)} · ${ritual.duration}m</div>
+            </div>
+          </div>
+        `).join('')}
+      `}
       
       <div class="add-section">
         <h3>+ Add Time Block</h3>
         <div class="time-input-row">
-          <input type="text" id="startTime" placeholder="09:00" />
+          <input type="text" id="startTime" placeholder="09:00" pattern="[0-2][0-9]:[0-5][0-9]" />
           <span class="time-separator">→</span>
-          <input type="text" id="endTime" placeholder="11:00" />
+          <input type="text" id="endTime" placeholder="11:00" pattern="[0-2][0-9]:[0-5][0-9]" />
         </div>
         <select id="blockCategory">
           ${categories.map(cat => `<option>${escapeHtml(cat)}</option>`).join('')}
@@ -1506,7 +1525,31 @@
       }
       
       if (start && end && selectedDays.length > 0) {
+        // Check for overlaps
+        const startMin = parseTime(start);
+        const endMin = parseTime(end);
+        
+        if (startMin >= endMin) {
+          alert('End time must be after start time');
+          return;
+        }
+        
         selectedDays.forEach(day => {
+          const dayBlocks = settings.framework[day] || {};
+          
+          // Check for overlaps in this day
+          for (const [range, data] of Object.entries(dayBlocks)) {
+            const [existingStart, existingEnd] = range.split('-');
+            const existingStartMin = parseTime(existingStart);
+            const existingEndMin = parseTime(existingEnd);
+            
+            // Check if new block overlaps with existing
+            if (!(endMin <= existingStartMin || startMin >= existingEndMin)) {
+              alert(`Overlap detected on ${day} with existing block ${range}`);
+              return;
+            }
+          }
+          
           if (!settings.framework[day]) {
             settings.framework[day] = {};
           }
@@ -1515,10 +1558,18 @@
             days: selectedDays
           };
         });
+        
         saveData();
         renderScheduleScreen();
         renderHomeScreen();
       }
+    });
+    
+    document.querySelectorAll('[data-edit-block]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const range = btn.dataset.editBlock;
+        openEditScheduleModal(range);
+      });
     });
     
     document.querySelectorAll('[data-delete]').forEach(btn => {
@@ -1530,6 +1581,35 @@
         renderHomeScreen();
       });
     });
+  }
+  
+  function openEditScheduleModal(range) {
+    const blockData = settings.framework[currentScheduleDay][range];
+    if (!blockData) return;
+    
+    const [start, end] = range.split('-');
+    const category = blockData.category || blockData;
+    
+    // Create simple prompt-based edit
+    const newStart = prompt('Start time (HH:MM)', start);
+    if (!newStart) return;
+    
+    const newEnd = prompt('End time (HH:MM)', end);
+    if (!newEnd) return;
+    
+    const newCategory = prompt('Category', category);
+    if (!newCategory) return;
+    
+    // Delete old, add new
+    delete settings.framework[currentScheduleDay][range];
+    settings.framework[currentScheduleDay][`${newStart}-${newEnd}`] = {
+      category: newCategory,
+      days: blockData.days || [currentScheduleDay]
+    };
+    
+    saveData();
+    renderScheduleScreen();
+    renderHomeScreen();
   }
 
   // ============ TAGS SCREEN ============
